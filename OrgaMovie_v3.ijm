@@ -1,37 +1,48 @@
 requires("1.53f");	// for Array.filter()
 
 print("\\Clear");
+run("Close All");
 
 //%% input parameters
 minBrightnessFactor	= 1;
 min_thresh_meth		= "Percentile";
 overexp_percile = 0.5;
 input_filetype = "nd2";
-filesize_limit = 3; // max filesize (in GB)
+filesize_limit = 16; // max filesize (in GB)
+outdirname = "_Movies";
 
 // find all images in base directory
 dir = getDirectory("Choose directory with images to process");
 list = getFileList(dir);
 im_list = Array.filter(list,"."+input_filetype);
 
+// prep output folders
+outdir = dir + outdirname + File.separator;
+File.makeDirectory(outdir);
+regdir = outdir + "_Registration" + File.separator;
+File.makeDirectory(regdir);
+
 // run on all images
+
 for (i = 0; i < im_list.length; i++) {
-	impath = dir + im_list[i];
-	
-	filesize = getFileSize(impath);
-	
-	if (filesize > filesize_limit) {
-		print("FILE TOO LARGE TO PROCESS");
-		print("   file size above size limit");
-		print("   consider splitting image or increasing limit");
-		print("   this file will be skipped for now");
-	}
-	else{
-		print("filesize within limit");
-		//openFile(impath);
-	}
-	//print(filesize);
+	for (q = 0; q < 3; q++) 	run("Collect Garbage");
 	print("__");
+	im_name = im_list[i]
+	impath = dir + imname;
+	openFileAndDoChecks(impath);
+
+	// only proceed if everything is ok
+	// if checks not passed, no image will be open
+	
+	if(nImages>0){
+		ori = getTitle();
+		run("Grays");
+		run("Z Project...", "projection=[Max Intensity] all");
+		prj = getTitle();
+		saveAs("Tiff", outdir + prj);
+
+		
+	}
 }
 
 
@@ -74,17 +85,33 @@ for (i = 0; i < im_list.length; i++) {
 		// TIFF split (separate smaller files, can be stored in 8bit grayscale to save MBs, then can add separate package to compile each part in LUT of choice)
 
 
-function openFile(path){
-	skip = false; // in principle, do not skip analysis for this file?
+function openFileAndDoChecks(path){
+	filesize = getFileSize(path);
 	
-	//%% open files
-	run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
-	getFileSize();
+	if (filesize > filesize_limit) {
+		print("FILE TOO LARGE TO PROCESS");
+		print("   file size above size limit");
+		print("   consider splitting image or increasing limit");
+		print("   this file will be skipped");
+	}
 	
-	//%% fix file if not opened as Hyperstack
+	else{
+		//print("filesize within limit");
+		run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
+		if (!checkHyperstack())	close();
+	}
 	
-	hstack_check = Property.get("hyperstack");
-	if (hstack_check != "true"){
+}
+
+
+
+function checkHyperstack(){
+	
+	// check if hyperstack
+	hstack_check =  Stack.isHyperstack;
+	
+	if (!hstack_check){
+		//%% if not hstack: check if error would occur upon conversion
 		frames = Property.getNumber("SizeT"); // reads number of frames (T-dimension) from metadata
 		z_slices = nSlices/frames;			  // calculates number of Z-slices from total slices in stack and number of frames
 		if (isNaN(frames) || round(z_slices) != z_slices) {	// checks if frames can be read from metadata and if all slices and frames are present
@@ -94,26 +121,15 @@ function openFile(path){
 			print("--number of z-slices found (calculated from above):", z_slices);
 			print("SKIPPING THIS IMAGE DURING ANALYSIS");
 			print("");
-			skip = true;	// skip analysis for this file
 		}
+		// if no error: convert to hyperstack and proceed with analysis
 		else {
 			run("Stack to Hyperstack...", "order=xyczt(default) channels=1 slices="+z_slices+" frames="+frames+" display=Grayscale");
+			hstack_check = true;
 		}
 	}
-	return skip;
+	return hstack_check;
 }
-
-
-/*
-//%% create projections
-selectImage(1);
-close("\\Others");
-ori = getTitle();
-run("Z Project...", "projection=[Max Intensity] all");
-prj = getTitle();
-run("Z Project...", "projection=[Max Intensity]");
-t_prj = getTitle();
-*/
 
 
 function setBC(min_thresh_meth, minBrightnessFactor, OE_perc){
