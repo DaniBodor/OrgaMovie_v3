@@ -287,3 +287,29 @@ function getFileSize(path){
 
 	return size
 }
+
+
+function cropSignal(){
+	im = getTitle();
+	im_count = nImages;
+	
+	// project
+	run("Z Project...", "projection=[Max Intensity]");
+	
+	// find crop outline
+	setAutoThreshold("MinError dark");
+	setOption("BlackBackground", false);
+	run("Convert to Mask");
+	run("Erode");
+	setThreshold(255, 255);
+	run("Analyze Particles...", "clear add");
+	roiManager("Combine");
+	getSelectionBounds(x, y, width, height);
+	close();
+	
+	// crop before registration
+	selectImage(im);
+	run("Duplicate...", "duplicate");
+	makeRectangle(x, y, width, height);
+	run("Crop");
+}
