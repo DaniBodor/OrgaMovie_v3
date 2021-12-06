@@ -56,14 +56,54 @@ for (i = 0; i < im_list.length; i++) {
 		print("making projection");
 		run("Z Project...", "projection=[Max Intensity] all");
 		prj = getTitle();
-		saveAs("Tiff", outdir + prj);
+		if (intermediate_times)	before = printTime(before);
+
+		// crop around signal and save projection
+		print("first crop around signal");
+		findSignalSpace(crop_boundary);
+		run("Duplicate...", "duplicate title=crop");
+		roiManager("select", 0);
+		run("Crop");
+		//saveAs("Tiff", outdir + im_name + "PRJCROP.tif");
+		crop = getTitle();
+		if (intermediate_times)	before = printTime(before);
+		
+		// find B&C
+		print("find brightness & contrast settings");
+		setBC();
+		getMinAndMax(minBrightness, maxBrightness);
+		if (intermediate_times)	before = printTime(before);
 		
 		// create registration file for drift correction
+		print("create registration file");
+		run("Tile");
+		selectImage(crop);
+		setSlice(nSlices/2);
 		TransMatrix_File = regdir + im_name + "_TrMatrix.txt";
-		getTransformationMatrix();
+		run("MultiStackReg", "stack_1="+crop+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
+		if (intermediate_times)	before = printTime(before);
 
-		// find B&C
+		// create depth coded image
+		print("create depth-coded movie");
+		selectImage(ori);
+		depthCoding();
+		dep_im = getTitle();
+		if (intermediate_times)	before = printTime(before);
 		
+		// correct drift on depth coded image
+		print("correct drift on depth code");
+		correctDriftRGB(dep_im);
+		dep_reg = getTitle();
+		if (intermediate_times)	before = printTime(before);
+
+		// final crop
+		print("final crop");
+		selectImage(dep_reg);
+		findSignalSpace(crop_boundary);
+		roiManager("select", 0);
+		run("Crop");
+		roiManager("reset");
+		if (intermediate_times)	before = printTime(before);
 	}
 	time = round((getTime() - start)/1000);
 	print("image took",time,"seconds to process");
