@@ -240,7 +240,6 @@ function correct_drift(im, TransMatrix_File){
 }
 
 
-
 function autoCrop(minSize, extraBoundary) { // DB
 	selectImage(t_prj);
 	run("Select None");
@@ -355,12 +354,12 @@ function getFileSize(path){
 }
 
 
-function cropSignal(){
+function findSignalSpace(boundary){
 	im = getTitle();
-	im_count = nImages;
 	
 	// project
 	run("Z Project...", "projection=[Max Intensity]");
+	if (bitDepth() == 24)	run("8-bit");
 	
 	// find crop outline
 	setAutoThreshold("MinError dark");
@@ -369,13 +368,49 @@ function cropSignal(){
 	run("Erode");
 	setThreshold(255, 255);
 	run("Analyze Particles...", "clear add");
-	roiManager("Combine");
+	
+	if (roiManager("count") > 1){
+		roiManager("deselect");
+		roiManager("Combine");
+	}
+	else roiManager("select", 0);
 	getSelectionBounds(x, y, width, height);
 	close();
+	roiManager("reset");
 	
 	// crop before registration
 	selectImage(im);
-	run("Duplicate...", "duplicate");
-	makeRectangle(x, y, width, height);
-	run("Crop");
+	makeRectangle(x-boundary, y-boundary, width+2*boundary, height+2*boundary);
+	roiManager("add");
+	run("Select None");
+}
+
+function depthCoding(){
+	// crop according to previously found size
+	roiManager("select", 0);
+	run("Duplicate...", "title=hyperstack_region duplicate");
+	hstack_crop = getTitle();
+	
+	// get dimensions
+	Stack.getDimensions(width, height, channels, slices, frames);
+	getPixelSize(unit, pixelWidth, pixelHeight);
+
+	// swap frames and slices 
+	run("Re-order Hyperstack ...", "channels=[Channels (c)] slices=[Frames (t)] frames=[Slices (z)]");
+	setMinAndMax(minBrightness, maxBrightness);
+	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices);
+	depim = getTitle();
+
+	// reset dimensions
+	Stack.setXUnit(unit);
+	run("Properties...", "channels=1 slices=1 frames="+frames+ " pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
+}
+
+
+function printTime(before){
+	after = getTime();
+	time = round((after - before)/1000);
+	print("    this process took",time,"seconds");
+	
+	return after;
 }
