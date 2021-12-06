@@ -27,22 +27,30 @@ File.makeDirectory(regdir);
 for (i = 0; i < im_list.length; i++) {
 	for (q = 0; q < 3; q++) 	run("Collect Garbage");
 	print("__");
-	im_name = im_list[i]
-	impath = dir + imname;
+	im_name = im_list[i];
+	impath = dir + im_name;
 	openFileAndDoChecks(impath);
 
+	print ("processing:", im_name);
 	// only proceed if everything is ok
 	// if checks not passed, no image will be open
 	
 	if(nImages>0){
 		ori = getTitle();
-		run("Grays");
+
+		// make projection
 		run("Z Project...", "projection=[Max Intensity] all");
 		prj = getTitle();
 		saveAs("Tiff", outdir + prj);
+		
+		// create registration file for drift correction
+		TransMatrix_File = regdir + im_name + "_TrMatrix.txt";
+		getTransformationMatrix();
 
+		// find B&C
 		
 	}
+
 }
 
 
@@ -98,6 +106,7 @@ function openFileAndDoChecks(path){
 	else{
 		//print("filesize within limit");
 		run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
+		run("Grays");
 		if (!checkHyperstack())	close();
 	}
 	
@@ -267,7 +276,7 @@ function getFileSize(path){
 	
 	// python code to print filesize to log
 	endex = "||";
-	py= "path = '" + path + "'\n" +
+	py= "path = r'" + path + "'\n" +
 		"import os" + "\n" + 
 		"size = os.path.getsize(path)" + "\n" +
 		"from ij.IJ import log" + "\n" +
