@@ -60,11 +60,18 @@ setBC(min_thresh_meth, minBrightnessFactor, overexp_percile)
 
 
 
-function openFile(filename){
+function checkFilesize(path, limit){
+	//run("Bio-Formats Importer", "open=[&path] view=[Metadata only]");
+	run("Bio-Formats Importer", "open=[&path] color_mode=Default display_metadata rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT use_virtual_stack");
+}
+
+
+function openFile(path){
 	skip = false; // in principle, do not skip analysis for this file?
 	
 	//%% open files
-	run("Bio-Formats Importer", "open=[" + filename + "] color_mode=Default rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT");
+	run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
+	getFileSize();
 	
 	//%% fix file if not opened as Hyperstack
 	
@@ -227,4 +234,28 @@ function createDepthLegend(nBands, W, H){
 	}
 	run("Depth Organoid");
 	
+}
+
+function getFileSize(path){
+	
+	print("filesize:", path, "__");
+	
+	// python code to print filesize to log
+	py= "path = '" + path + "'\n" +
+		"import os" + "\n" + 
+		"size = os.path.getsize(path)" + "\n" +
+		"print str(size) + '||'";
+	eval ("python",py);
+
+	// find filesize from logwindow
+	L = getInfo("log");
+	index1 = indexOf(L, "__")+2;
+	index2 = indexOf(L, "||");
+	size = substring(L,index1,index2);
+
+	// convert to GB
+	G = 1073741824;	// bytes in GB
+	size = parseInt(size)/G;
+
+	return size
 }
