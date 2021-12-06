@@ -1,10 +1,25 @@
+requires("1.53f");	// for Array.filter()
 
 //%% input parameters
 minBrightnessFactor	= 1;
 min_thresh_meth		= "Percentile";
 overexp_percile = 0.5;
+input_filetype = "nd2";
+limit = 16; // max filesize (in GB)
 
-prj = getTitle();
+// find all images in base directory
+dir = getDirectory("Choose directory with images to process");
+list = getFileList(dir);
+im_list = Array.filter(list,"."+input_filetype);
+
+// run on all images
+for (i = 0; i < im_list.length; i++) {
+	im_path = dir + im_list[i];
+	
+	openFile(im_path);
+}
+
+
 setBC(min_thresh_meth, minBrightnessFactor, overexp_percile)
 
 
