@@ -225,18 +225,26 @@ function setBC(){
 function getTransformationMatrix(){
 	//%% make transformation matrix file
 	im = getTitle();
-	
-	// pre-crop to speed up registration
-	cropSignal();
-	cropped = getTitle();
-
 	// register and save matrix
 	run("MultiStackReg", "stack_1="+cropped+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
 }
 
-function correct_drift(im, TransMatrix_File){
+function correctDriftRGB(im){
 	// %% use transformatin matrix to correct drift
-	run("MultiStackReg", "stack_1="+im+" action_1=[Load Transformation File] file_1=["+TransMatrix_File+"] stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body]");
+	
+	// split channels
+	selectImage(im);
+	run("Duplicate...", "duplicate");
+	run("Split Channels");
+	
+	// do registration on each channel
+	names = newArray("RED","GREEN","BLUE");
+	for (c = 0; c < 3; c++) {
+		selectImage(nImages-2+c);
+		rename(names[c]);
+		run("MultiStackReg", "stack_1=["+names[c]+"] action_1=[Load Transformation File] file_1=["+TransMatrix_File+"] stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body]");
+	}
+	run("Merge Channels...", "c1=[RED] c2=[GREEN] c3=[BLUE]");
 }
 
 
