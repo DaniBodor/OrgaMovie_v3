@@ -64,7 +64,6 @@ for (i = 0; i < im_list.length; i++) {
 		run("Duplicate...", "duplicate title=crop");
 		roiManager("select", 0);
 		run("Crop");
-		//saveAs("Tiff", outdir + im_name + "PRJCROP.tif");
 		crop = getTitle();
 		if (intermediate_times)	before = printTime(before);
 		
@@ -247,53 +246,6 @@ function correctDriftRGB(im){
 	run("Merge Channels...", "c1=[RED] c2=[GREEN] c3=[BLUE]");
 }
 
-
-function autoCrop(minSize, extraBoundary) { // DB
-	selectImage(t_prj);
-	run("Select None");
-
-	//%% find areas with signal
-	setAutoThreshold("Percentile dark");
-	getThreshold(lower, upper);
-	setThreshold(lower*0.95, upper);
-	run("Analyze Particles...", "size="+minSize+"-Infinity pixel clear add");
-
-	if (nResults > 0) {
-		//%% select largest ROI
-		area = -1;
-		largest_roi = 0;
-		
-		for (r = 1; r < nResults; r++) {
-			curr_area = getResult("Area", r);
-			if (curr_area > area){
-				area = curr_area;
-				largest_roi = r;
-			}
-		}
-
-		//%% select largest region
-		roiManager("select", largest_roi);
-		getBoundingRect(x, y, width, height);
-		roiManager("reset");
-		makeRectangle(x-extraBoundary, y-extraBoundary, width+2*extraBoundary, height+2*extraBoundary)
-		//roiManager("add");
-		//roiManager("rename", "Crop1");
-
-		//%% crop images
-		for (i = 0; i < nImages; i++) {
-			selectImage(i);
-			roiManager("select", 0)
-			run("Crop");
-		}
-	}
-	
-	// in case no region is found use entire image
-	/*else {
-		run("Select All");
-		roiManager("add");
-		roiManager("rename", "Crop1");
-	}*/
-}
 
 
 function getPercentile(percile){
