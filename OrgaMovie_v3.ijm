@@ -198,23 +198,24 @@ function checkHyperstack(){
 }
 
 
-function setBC(min_thresh_meth, minBrightnessFactor, OE_perc){
+function setBC(){
 	//%% select center frame for determining B&C
 	selectImage(prj);
 	setSlice(nSlices/2);
 
+	// get min brightness setting of threshold method
 	setAutoThreshold(min_thresh_meth);
-	getThreshold(no,minT);
+	getThreshold(_,minT);
 	minT = minT * minBrightnessFactor;
+	
+	// get max brightness setting based on percentile of overexposed pixels
+	//maxT = getPercentile(overexp_percile);
+	run("Enhance Contrast", "saturated=&saturate");
+	getMinAndMax(_, maxT);
 
-	makeRectangle(getWidth/2, 0, getWidth/2, getHeight);
-	maxT = getPercentile(OE_perc);
-		
-	//setAutoThreshold(max_thresh_meth);
-	//getThreshold(no,maxT);
-	if(maxT <= minT)	resetMinAndMax();
-	else				setMinAndMax(minT,maxT);
-
+	// set min and max according to rules above
+	if (minT < maxT)	setMinAndMax(minT,maxT);
+	else				resetMinAndMax();
 }
 
 
