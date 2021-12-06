@@ -59,13 +59,6 @@ setBC(min_thresh_meth, minBrightnessFactor, overexp_percile)
 		// TIFF split (separate smaller files, can be stored in 8bit grayscale to save MBs, then can add separate package to compile each part in LUT of choice)
 
 
-
-function checkFilesize(path, limit){
-	//run("Bio-Formats Importer", "open=[&path] view=[Metadata only]");
-	run("Bio-Formats Importer", "open=[&path] color_mode=Default display_metadata rois_import=[ROI manager] view=Hyperstack stack_order=XYCZT use_virtual_stack");
-}
-
-
 function openFile(path){
 	skip = false; // in principle, do not skip analysis for this file?
 	
