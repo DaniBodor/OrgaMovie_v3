@@ -1,11 +1,13 @@
 requires("1.53f");	// for Array.filter()
 
+print("\\Clear");
+
 //%% input parameters
 minBrightnessFactor	= 1;
 min_thresh_meth		= "Percentile";
 overexp_percile = 0.5;
 input_filetype = "nd2";
-limit = 16; // max filesize (in GB)
+filesize_limit = 3; // max filesize (in GB)
 
 // find all images in base directory
 dir = getDirectory("Choose directory with images to process");
@@ -14,13 +16,26 @@ im_list = Array.filter(list,"."+input_filetype);
 
 // run on all images
 for (i = 0; i < im_list.length; i++) {
-	im_path = dir + im_list[i];
+	impath = dir + im_list[i];
 	
-	openFile(im_path);
+	filesize = getFileSize(impath);
+	
+	if (filesize > filesize_limit) {
+		print("FILE TOO LARGE TO PROCESS");
+		print("   file size above size limit");
+		print("   consider splitting image or increasing limit");
+		print("   this file will be skipped for now");
+	}
+	else{
+		print("filesize within limit");
+		//openFile(impath);
+	}
+	//print(filesize);
+	print("__");
 }
 
 
-setBC(min_thresh_meth, minBrightnessFactor, overexp_percile)
+//setBC(min_thresh_meth, minBrightnessFactor, overexp_percile)
 
 
 
@@ -230,25 +245,28 @@ function createDepthLegend(nBands, W, H){
 }
 
 function getFileSize(path){
-	
-	print("filesize:", path, "__");
+	current = "getFileSize: " + path;
+	print(current);
 	
 	// python code to print filesize to log
+	endex = "||";
 	py= "path = '" + path + "'\n" +
 		"import os" + "\n" + 
 		"size = os.path.getsize(path)" + "\n" +
-		"print str(size) + '||'";
+		"from ij.IJ import log" + "\n" +
+		"log(str(size) + '"+endex+"')";
 	eval ("python",py);
 
 	// find filesize from logwindow
 	L = getInfo("log");
-	index1 = indexOf(L, "__")+2;
-	index2 = indexOf(L, "||");
+	index1 = indexOf(L, current) + lengthOf(current);
+	index2 = indexOf(L, endex);
 	size = substring(L,index1,index2);
 
 	// convert to GB
 	G = 1073741824;	// bytes in GB
 	size = parseInt(size)/G;
+	print("\\Update:"+round(size*100)/100 + " GB");
 
 	return size
 }
