@@ -155,14 +155,15 @@ function setBC(min_thresh_meth, minBrightnessFactor, OE_perc){
 
 
 
-function getTransformationMatrix(base_folder){
+function getTransformationMatrix(im_name){
 	//%% make transformation matrix file
-	selectImage(prj);
-	run("Duplicate...", "duplicate");
-	prj_reg = getTitle();
-	TransMatrix_File = base_folder + "TrMatrix.txt";
+	im = getTitle();
+
+
+	// register and save matrix
+	TransMatrix_File = regdir + im_name + "_TrMatrix.txt";
 	
-	run("MultiStackReg", "stack_1="+prj_reg+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
+	run("MultiStackReg", "stack_1="+reg+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
 
 	return TransMatrix_File;
 }
