@@ -1,15 +1,22 @@
+
 requires("1.53f");	// for Array.filter()
 
 print("\\Clear");
 run("Close All");
+roiManager("reset");
 
 //%% input parameters
 minBrightnessFactor	= 1;
 min_thresh_meth		= "Percentile";
-overexp_percile = 0.5;
+overexp_percile = 0.1;	// unused
+saturate = 0.01;	// saturation value used for contrasting
 input_filetype = "nd2";
 filesize_limit = 16; // max filesize (in GB)
 outdirname = "_Movies";
+depth_LUT = "Depth Organoid";
+crop_boundary = 24;	// pixels
+
+intermediate_times = true;
 
 // find all images in base directory
 dir = getDirectory("Choose directory with images to process");
@@ -25,20 +32,28 @@ File.makeDirectory(regdir);
 // run on all images
 
 for (i = 0; i < im_list.length; i++) {
-	for (q = 0; q < 3; q++) 	run("Collect Garbage");
+
+	// image preliminaries
+	
+	for (q = 0; q < 3; q++) 	run("Collect Garbage"); // clear memory before opening images
+	start = getTime();
+	if (intermediate_times)	before = start;
+	
 	print("__");
 	im_name = im_list[i];
 	impath = dir + im_name;
-	openFileAndDoChecks(impath);
-
 	print ("processing:", im_name);
-	// only proceed if everything is ok
-	// if checks not passed, no image will be open
 	
+	// check filesize and hyperstack-ness
+	openFileAndDoChecks(impath);
+	
+	// if checks not passed, no image will be open at this point
+	// and all further steps will be skipped
 	if(nImages>0){
 		ori = getTitle();
 
-		// make projection
+		// make projection & crop
+		print("making projection");
 		run("Z Project...", "projection=[Max Intensity] all");
 		prj = getTitle();
 		saveAs("Tiff", outdir + prj);
@@ -50,12 +65,14 @@ for (i = 0; i < im_list.length; i++) {
 		// find B&C
 		
 	}
+	time = round((getTime() - start)/1000);
+	print("image took",time,"seconds to process");
 
 }
-
-
-//setBC(min_thresh_meth, minBrightnessFactor, overexp_percile)
-
+run("Tile");
+print("----");
+print("----");
+print("macro end");
 
 
 
