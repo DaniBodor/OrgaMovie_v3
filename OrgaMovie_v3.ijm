@@ -10,10 +10,11 @@ minBrightnessFactor	= 1;
 min_thresh_meth		= "Percentile";
 overexp_percile = 0.1;	// unused
 saturate = 0.01;	// saturation value used for contrasting
-input_filetype = "nd2";
+input_filetype = "tif";
 filesize_limit = 16; // max filesize (in GB)
 outdirname = "_Movies";
 depth_LUT = "Depth Organoid";
+prj_LUT = "The Real Glow";
 crop_boundary = 24;	// pixels
 
 intermediate_times = true;
@@ -61,7 +62,7 @@ for (i = 0; i < im_list.length; i++) {
 		// crop around signal and save projection
 		print("first crop around signal");
 		findSignalSpace(crop_boundary);
-		run("Duplicate...", "duplicate title=crop");
+		run("Duplicate...", "duplicate title=PRJ");
 		roiManager("select", 0);
 		run("Crop");
 		crop = getTitle();
@@ -95,14 +96,23 @@ for (i = 0; i < im_list.length; i++) {
 		dep_reg = getTitle();
 		if (intermediate_times)	before = printTime(before);
 
-		// final crop
-		print("final crop");
+		// find final crop
+		print("output intermediates");
 		selectImage(dep_reg);
 		findSignalSpace(crop_boundary);
-		roiManager("select", 0);
-		run("Crop");
+
+		// crop projections and save
+		outputArray = newArray(crop, dep_reg);
+		for (x = 0; x < outputArray.length; x++) {
+			selectImage(outputArray[x]);	
+			roiManager("select", 0);
+			run("Crop");
+			selectImage(crop);
+			saveAs("Tiff", outdir + im_name + "_" + getTitle() + ".tif");
+		}
 		roiManager("reset");
 		if (intermediate_times)	before = printTime(before);
+
 	}
 	time = round((getTime() - start)/1000);
 	print("image took",time,"seconds to process");
@@ -373,4 +383,16 @@ function printTime(before){
 	print("    this process took",time,"seconds");
 	
 	return after;
+}
+
+
+function makeFinalMovie(){
+	// apply LUT to normal projection
+	selectImage(crop);
+	run("The Real Glow");
+	setMinAndMax(minBrightness, maxBrightness);
+
+	// create depth coding legend
+	createDepthLegend(slices, getWidth/2, getHeight()/12);
+	
 }
