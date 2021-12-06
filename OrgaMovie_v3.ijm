@@ -164,17 +164,16 @@ function setBC(min_thresh_meth, minBrightnessFactor, OE_perc){
 
 
 
-function getTransformationMatrix(im_name){
+function getTransformationMatrix(){
 	//%% make transformation matrix file
 	im = getTitle();
-
+	
+	// pre-crop to speed up registration
+	cropSignal();
+	cropped = getTitle();
 
 	// register and save matrix
-	TransMatrix_File = regdir + im_name + "_TrMatrix.txt";
-	
-	run("MultiStackReg", "stack_1="+reg+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
-
-	return TransMatrix_File;
+	run("MultiStackReg", "stack_1="+cropped+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
 }
 
 function correct_drift(im, TransMatrix_File){
