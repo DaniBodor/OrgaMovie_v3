@@ -413,10 +413,16 @@ function findScalebarSize(ideal_fraction){
 function makeFinalMovie(){
 	// apply LUT to normal projection
 	selectImage(crop);
-	run("The Real Glow");
+	run(prj_LUT);
 	setMinAndMax(minBrightness, maxBrightness);
+	run("RGB Color");
 
-	// create depth coding legend
-	createDepthLegend(slices, getWidth/2, getHeight()/12);
+	// combine depth coding with projection
+	run("Combine...", "stack1=" + dep_reg + " stack2=" + crop);
+
+	// create depth legend
+	//createDepthLegend(slices, getWidth/2, getHeight()/12);
 	
+	newImage("Untitled", "8-bit black", getWidth(), 32, nSlices);
+
 }
