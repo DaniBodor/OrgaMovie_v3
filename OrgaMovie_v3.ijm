@@ -426,33 +426,52 @@ function findScalebarSize(){
 	return returnValue;
 }
 
-function makeHeaderImage(title){
-	// title has to start with "D" for depth or "P" for projection or "M" for max projection
-	type = substring(title.toUpperCase, 0, 1);
+function makeHeaderImage(title, type){
+	im_width = getWidth();
 	
-	// LUT min/max labels
+	// type has to be "D" for depth or "P" for projection
+	type = type.toUpperCase;
+
+	// specify LUT min/max labels depending on type
 	if (type == "D"){
 		scalemin = "0";
 		maxD = Z_step * (slices-1);	// max depth of organoid
 		maxD = round(maxD*10)/10;	// make max 1 decimal long
 		scalemax = toString(maxD);	// convert to string
 	}
-	if (type == "P" || type == "M"){
+	else if (type == "P"){
 		scalemin = "min";
 		scalemax = "max";
 	}
-	
-	// sizes
-	headH = 48; // pixel height of header
-	fontsize = round(headH/3);
-	dist = 4;
+
+
+	// sizes (move some of these to input parameters?)
 	wleft = getStringWidth(scalemin);
 	wright = getStringWidth(scalemax);
 	wmax = maxOf(wleft,wright);
-	setFont("SansSerif", fontsize, "bold antialiased");
+	setFont("SansSerif", header_fontsize, "bold antialiased");
+	lut_x = 2*header_pixoffset + wmax;
+	lut_y = header_height-header_fontsize*1.5-1;
+	lut_w = im_width-4*header_pixoffset-2*wmax;
+	lut_h = header_fontsize*1.5;
+
+
+	// create LUT bar image
+	if (type == "D"){
+		createDepthLegend(slices, lut_w, lut_h);
+	}
+	else if (type == "P"){
+		newImage(prj_LUT+"_header", "8-bit ramp", lut_w, lut_h, 1);
+		run(prj_LUT);
+	}
+	lut_im = getTitle();
+	run("RGB Color");
+	Image.copy;
+	setColor(255,255,255);
 
 	// create header image
-	newImage(title+"_header", "8-bit black", getWidth(), headH, nSlices);
+	newImage(title, "RGB black", im_width, header_height, frames);
+	head = getTitle();
 	Stack.setXUnit(pix_unit);
 	run("Properties...", "pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
 
@@ -460,12 +479,15 @@ function makeHeaderImage(title){
 	for (i = 0; i < nSlices; i++) {
 		setSlice(i+1);
 		setJustification("center");
-		drawString(title, getWidth()/2, fontsize + dist);			// image title
-		drawString(scalemin, (wmax/2+dist), getHeight-dist);				// left of LUT bar
-		drawString(scalemax, getWidth-(wmax/2+dist), getHeight-dist);	// right of LUT bar
+		drawString(title, getWidth()/2, header_fontsize + header_pixoffset);			// image title
+		drawString(scalemin, (wmax/2+header_pixoffset), getHeight-header_pixoffset);				// left of LUT bar
+		drawString(scalemax, getWidth-(wmax/2+header_pixoffset), getHeight-header_pixoffset);	// right of LUT bar
 
-		//drawRect(2*dist + wmax, getHeight()-fontsize*1.5-1, getWidth()-4*dist-2*wmax, fontsize*1.5);
+		// draw LUT bar and outline
+		Image.paste(lut_x, lut_y)
+		drawRect(lut_x, lut_y, lut_w, lut_h);
 	}
+	close(lut_im);
 }
 
 
