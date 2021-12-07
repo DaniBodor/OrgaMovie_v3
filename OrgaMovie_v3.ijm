@@ -302,7 +302,7 @@ function getPercentile(percile){
 
 
 function createDepthLegend(nBands, W, H){
-	newImage("" + nBands + "_bands", "8-bit black", W, H, 1);
+	newImage("" + nBands + "_bands_header", "8-bit black", W, H, 1);
 	
 	for (i = 0; i < nBands; i++) {
 		BW = getWidth()/nBands;
@@ -313,9 +313,8 @@ function createDepthLegend(nBands, W, H){
 		fill();
 
 		run("Select None");
-		setColor(1000000000);
 	}
-	run("Depth Organoid");
+	run(depth_LUT);
 	
 }
 
