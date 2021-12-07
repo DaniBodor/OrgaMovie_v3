@@ -7,12 +7,13 @@ roiManager("reset");
 
 //%% input parameters
 
-// input settings
+// input/output settings
 input_filetype = "tif";
 filesize_limit = 16; // max filesize (in GB)
 outdirname = "_Movies";
 Z_step = 2.5;		// microns (can this be read from metadata?)
 T_step = 3;			// min (can this be read from metadata?)
+framerate = 18;		//fps
 
 // layout settings
 minBrightnessFactor	= 1;
@@ -131,8 +132,13 @@ for (i = 0; i < im_list.length; i++) {
 			roiManager("select", 0);
 			run("Crop");
 			selectImage(crop);
-			saveAs("Tiff", outdir + im_name + "_" + getTitle() + ".tif");
+			saveAs("Tiff", outdir + im_name + "_" + getTitle());
 		}
+		fuseImages();
+		savename = outdir + im_name + "_OrgaMovie";
+		saveAs("Tiff", savename);
+		run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename +  +"]");
+		//saveAs("AVI", outdir + im_name + "_" + getTitle());
 		roiManager("reset");
 		if (intermediate_times)	before = printTime(before);
 
@@ -491,7 +497,7 @@ function makeHeaderImage(title, type){
 }
 
 
-function makeFinalMovie(){
+function fuseImages(){
 	// apply LUT to normal projection
 	selectImage(crop);
 	run(prj_LUT);
