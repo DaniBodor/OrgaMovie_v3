@@ -16,9 +16,11 @@ outdirname = "_Movies";
 depth_LUT = "Depth Organoid";
 prj_LUT = "The Real Glow";
 crop_boundary = 24;	// pixels
-scalebar_size = 25;	// microns
 Z_step = 2.5;		// microns
-scalebarOptions = newArray(1,2,5,10,25,50,100);
+
+scalebar_size = 25;	// microns
+scalebarOptions = newArray(1, 2, 5, 7.5, 10, 15, 20, 25, 40, 50, 60, 75, 100, 125, 150, 200, 250, 500, 750, 1000, 1500, 2000); /// in microns
+scalebarProportion = 0.2; // proportion of image width best matching scale bar width
 
 intermediate_times = true;
 
@@ -386,10 +388,10 @@ function printTime(before){
 	return after;
 }
 
-function findScalebarSize(ideal_fraction){
+function findScalebarSize(){
 	// get ideal width for scale bar
 	fullW = getWidth() * pixelWidth;
-	idealW = fullW/ideal_fraction;
+	idealW = fullW * scalebarProportion;
 
 	// initialize in case full width is smaller than all options
 	minDiff = fullW;
