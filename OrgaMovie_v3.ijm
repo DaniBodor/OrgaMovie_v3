@@ -6,23 +6,39 @@ run("Close All");
 roiManager("reset");
 
 //%% input parameters
+
+// input settings
+input_filetype = "tif";
+filesize_limit = 16; // max filesize (in GB)
+outdirname = "_Movies";
+Z_step = 2.5;		// microns (can this be read from metadata?)
+T_step = 3;			// min (can this be read from metadata?)
+
+// layout settings
 minBrightnessFactor	= 1;
 min_thresh_meth		= "Percentile";
 overexp_percile = 0.1;	// unused
 saturate = 0.01;	// saturation value used for contrasting
-input_filetype = "tif";
-filesize_limit = 16; // max filesize (in GB)
-outdirname = "_Movies";
+crop_boundary = 24;	// pixels
+
+// header settings
+header_height = 48; // pixel height of header
+header_fontsize = round(header_height/3);
+header_pixoffset = 4;
 depth_LUT = "Depth Organoid";
 prj_LUT = "The Real Glow";
-crop_boundary = 24;	// pixels
-Z_step = 2.5;		// microns (can this be read from metadata?)
 
-scalebar_size = 25;	// microns
+// scalebar settings
+scalebar_size = 25;	// microns (unused)
 scalebarOptions = newArray(1, 2, 5, 7.5, 10, 15, 20, 25, 40, 50, 60, 75, 100, 125, 150, 200, 250, 500, 750, 1000, 1500, 2000); /// in microns
 scalebarProportion = 0.2; // proportion of image width best matching scale bar width
 
+// progress display settings
 intermediate_times = true;
+setBatchMode(false);
+
+
+
 
 // find all images in base directory
 dir = getDirectory("Choose directory with images to process");
