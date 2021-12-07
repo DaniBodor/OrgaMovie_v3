@@ -393,22 +393,22 @@ function findScalebarSize(){
 	fullW = getWidth() * pixelWidth;
 	idealW = fullW * scalebarProportion;
 
-	// initialize in case full width is smaller than all options
+	// initialize in case full width is smaller than all options 
+		// (unlikely, but don't want any chance of a crash)
+	returnValue = fullW;
 	minDiff = fullW;
-	arrayPos = -1;
 	
 	// find scale that closest matches ideal
 	for (i = 0; i < scalebarOptions.length; i++) {
 		diff = abs(scalebarOptions[i] - idealW);
-		if (diff < minDiff ) {
+		if (diff < minDiff) {
+			returnValue = scalebarOptions[i];
 			minDiff = diff;
-			arrayPos = i;
 		}
 	}
 
 	// return best match scalebar size
-	if (arrayPos < 0)	return minDiff;
-	else 				return scalebarOptions[arrayPos];
+	return returnValue;
 }
 
 
