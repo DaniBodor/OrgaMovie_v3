@@ -16,6 +16,9 @@ outdirname = "_Movies";
 depth_LUT = "Depth Organoid";
 prj_LUT = "The Real Glow";
 crop_boundary = 24;	// pixels
+scalebar_size = 25;	// microns
+Z_step = 2.5;		// microns
+scalebarOptions = newArray(1,2,5,10,25,50,100);
 
 intermediate_times = true;
 
@@ -52,6 +55,8 @@ for (i = 0; i < im_list.length; i++) {
 	// and all further steps will be skipped
 	if(nImages>0){
 		ori = getTitle();
+		getPixelSize(unit, pixelWidth, pixelHeight);
+		Stack.getDimensions(width, height, channels, slices, frames);
 
 		// make projection & crop
 		print("making projection");
@@ -360,10 +365,6 @@ function depthCoding(){
 	roiManager("select", 0);
 	run("Duplicate...", "title=hyperstack_region duplicate");
 	hstack_crop = getTitle();
-	
-	// get dimensions
-	Stack.getDimensions(width, height, channels, slices, frames);
-	getPixelSize(unit, pixelWidth, pixelHeight);
 
 	// swap frames and slices 
 	run("Re-order Hyperstack ...", "channels=[Channels (c)] slices=[Frames (t)] frames=[Slices (z)]");
@@ -383,6 +384,29 @@ function printTime(before){
 	print("    this process took",time,"seconds");
 	
 	return after;
+}
+
+function findScalebarSize(ideal_fraction){
+	// get ideal width for scale bar
+	fullW = getWidth() * pixelWidth;
+	idealW = fullW/ideal_fraction;
+
+	// initialize in case full width is smaller than all options
+	minDiff = fullW;
+	arrayPos = -1;
+	
+	// find scale that closest matches ideal
+	for (i = 0; i < scalebarOptions.length; i++) {
+		diff = abs(scalebarOptions[i] - idealW);
+		if (diff < minDiff ) {
+			minDiff = diff;
+			arrayPos = i;
+		}
+	}
+
+	// return best match scalebar size
+	if (arrayPos < 0)	return minDiff;
+	else 				return scalebarOptions[arrayPos];
 }
 
 
