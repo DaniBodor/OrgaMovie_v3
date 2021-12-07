@@ -49,7 +49,7 @@ im_list = Array.filter(list,"."+input_filetype);
 // prep output folders
 outdir = dir + outdirname + File.separator;
 File.makeDirectory(outdir);
-regdir = outdir + "_Registration" + File.separator;
+regdir = outdir + "_RegistrationMatrices" + File.separator;
 File.makeDirectory(regdir);
 
 // run on all images
@@ -105,6 +105,7 @@ for (i = 0; i < im_list.length; i++) {
 		setSlice(nSlices/2);
 		TransMatrix_File = regdir + im_name + "_TrMatrix.txt";
 		run("MultiStackReg", "stack_1="+crop+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
+		run(prj_LUT);
 		if (intermediate_times)	before = printTime(before);
 
 		// create depth coded image
@@ -131,23 +132,28 @@ for (i = 0; i < im_list.length; i++) {
 			selectImage(outputArray[x]);	
 			roiManager("select", 0);
 			run("Crop");
-			selectImage(crop);
+			run("Remove Overlay");	// fix for overlay box in RGB
 			saveAs("Tiff", outdir + im_name + "_" + getTitle());
+			rename(outputArray[x]);	// fixes renaming after saving
 		}
+		if (intermediate_times)	before = printTime(before);
+
+		// create final movies
+		print("create final movie");
 		fuseImages();
 		savename = outdir + im_name + "_OrgaMovie";
 		saveAs("Tiff", savename);
-		run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename +  +"]");
-		//saveAs("AVI", outdir + im_name + "_" + getTitle());
+		run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename + ".avi]");
 		roiManager("reset");
 		if (intermediate_times)	before = printTime(before);
 
 	}
 	time = round((getTime() - start)/1000);
 	print("image took",time,"seconds to process");
+	run("Close All");
 
 }
-run("Tile");
+//run("Tile");
 print("----");
 print("----");
 print("macro end");
@@ -452,8 +458,8 @@ function makeHeaderImage(title, type){
 
 
 	// sizes (move some of these to input parameters?)
-	wleft = getStringWidth(scalemin);
-	wright = getStringWidth(scalemax);
+	wleft = getStringWidth(scalemin)+4;
+	wright = getStringWidth(scalemax)+4;
 	wmax = maxOf(wleft,wright);
 	setFont("SansSerif", header_fontsize, "bold antialiased");
 	lut_x = 2*header_pixoffset + wmax;
@@ -506,19 +512,25 @@ function fuseImages(){
 
 	// create 2 header images
 	header1 = "DEPTH ("+ getInfo("micrometer.abbreviation") + ")";	// DEPTH (micron)
-	makeHeaderImage(head1, "d");
+	makeHeaderImage(header1, "d");
+	rename("HEAD1");
 	
 	header2 = "PROJECTION (AU)";
-	makeHeaderImage(head2, "p");
-
+	makeHeaderImage(header2, "p");
+	rename("HEAD2");
+	
 	// run("Scale Bar...", "width=25 height=4 font=14 color=White background=None location=[Lower Left] bold overlay label");
 	
 	// combine images
 	run("Combine...", "stack1=" + dep_reg + " stack2=" + crop);	// main movies
 	rename("MAIN");
-	run("Combine...", "stack1=" + header1 + " stack2=" + header2); // headers
-	rename("HEAD");
-	run("Combine...", "stack1=HEAD stack2=MAIN combine"); // headers above movies
+	run("Combine...", "stack1=HEAD1 stack2=HEAD2"); // headers
+	rename("HEADS");
+	run("Combine...", "stack1=HEADS stack2=MAIN combine"); // headers above movies
 
-	
+	for (n = 0; n < nSlices; n++) {
+		setSlice(n+1);
+		setColor(128,128,128);
+		drawLine(getWidth()/2, 0, getWidth()/2, getHeight());
+	}
 }
