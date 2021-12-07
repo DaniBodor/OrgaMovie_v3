@@ -499,13 +499,20 @@ function makeFinalMovie(){
 	run("RGB Color");
 
 	// create 2 header images
-	head_names = newArray("DEPTH","MAX PROJECTION");
+	header1 = "DEPTH ("+ getInfo("micrometer.abbreviation") + ")";	// DEPTH (micron)
+	makeHeaderImage(head1, "d");
 	
-	
-
-
-	// combine depth coding with projection
-	run("Combine...", "stack1=" + dep_reg + " stack2=" + crop);
+	header2 = "PROJECTION (AU)";
+	makeHeaderImage(head2, "p");
 
 	// run("Scale Bar...", "width=25 height=4 font=14 color=White background=None location=[Lower Left] bold overlay label");
+	
+	// combine images
+	run("Combine...", "stack1=" + dep_reg + " stack2=" + crop);	// main movies
+	rename("MAIN");
+	run("Combine...", "stack1=" + header1 + " stack2=" + header2); // headers
+	rename("HEAD");
+	run("Combine...", "stack1=HEAD stack2=MAIN combine"); // headers above movies
+
+	
 }
