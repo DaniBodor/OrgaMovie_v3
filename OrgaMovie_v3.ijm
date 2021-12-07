@@ -16,7 +16,7 @@ outdirname = "_Movies";
 depth_LUT = "Depth Organoid";
 prj_LUT = "The Real Glow";
 crop_boundary = 24;	// pixels
-Z_step = 2.5;		// microns
+Z_step = 2.5;		// microns (can this be read from metadata?)
 
 scalebar_size = 25;	// microns
 scalebarOptions = newArray(1, 2, 5, 7.5, 10, 15, 20, 25, 40, 50, 60, 75, 100, 125, 150, 200, 250, 500, 750, 1000, 1500, 2000); /// in microns
@@ -57,7 +57,7 @@ for (i = 0; i < im_list.length; i++) {
 	// and all further steps will be skipped
 	if(nImages>0){
 		ori = getTitle();
-		getPixelSize(unit, pixelWidth, pixelHeight);
+		getPixelSize(pix_unit, pixelWidth, pixelHeight);
 		Stack.getDimensions(width, height, channels, slices, frames);
 
 		// make projection & crop
@@ -375,7 +375,7 @@ function depthCoding(){
 	depim = getTitle();
 
 	// reset dimensions
-	Stack.setXUnit(unit);
+	Stack.setXUnit(pix_unit);
 	run("Properties...", "channels=1 slices=1 frames="+frames+ " pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
 }
 
@@ -411,6 +411,48 @@ function findScalebarSize(){
 	return returnValue;
 }
 
+function makeHeaderImage(title){
+	// title has to start with "D" for depth or "P" for projection or "M" for max projection
+	type = substring(title.toUpperCase, 0, 1);
+	
+	// LUT min/max labels
+	if (type == "D"){
+		scalemin = "0";
+		maxD = Z_step * (slices-1);	// max depth of organoid
+		maxD = round(maxD*10)/10;	// make max 1 decimal long
+		scalemax = toString(maxD);	// convert to string
+	}
+	if (type == "P" || type == "M"){
+		scalemin = "min";
+		scalemax = "max";
+	}
+	
+	// sizes
+	headH = 48; // pixel height of header
+	fontsize = round(headH/3);
+	dist = 4;
+	wleft = getStringWidth(scalemin);
+	wright = getStringWidth(scalemax);
+	wmax = maxOf(wleft,wright);
+	setFont("SansSerif", fontsize, "bold antialiased");
+
+	// create header image
+	newImage(title+"_header", "8-bit black", getWidth(), headH, nSlices);
+	Stack.setXUnit(pix_unit);
+	run("Properties...", "pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
+
+	// create labels on each slice
+	for (i = 0; i < nSlices; i++) {
+		setSlice(i+1);
+		setJustification("center");
+		drawString(title, getWidth()/2, fontsize + dist);			// image title
+		drawString(scalemin, (wmax/2+dist), getHeight-dist);				// left of LUT bar
+		drawString(scalemax, getWidth-(wmax/2+dist), getHeight-dist);	// right of LUT bar
+
+		//drawRect(2*dist + wmax, getHeight()-fontsize*1.5-1, getWidth()-4*dist-2*wmax, fontsize*1.5);
+	}
+}
+
 
 function makeFinalMovie(){
 	// apply LUT to normal projection
@@ -419,12 +461,14 @@ function makeFinalMovie(){
 	setMinAndMax(minBrightness, maxBrightness);
 	run("RGB Color");
 
+	// create 2 header images
+	head_names = newArray("DEPTH","MAX PROJECTION");
+	
+	
+
+
 	// combine depth coding with projection
 	run("Combine...", "stack1=" + dep_reg + " stack2=" + crop);
 
-	// create depth legend
-	//createDepthLegend(slices, getWidth/2, getHeight()/12);
-	
-	newImage("Untitled", "8-bit black", getWidth(), 32, nSlices);
-
+	// run("Scale Bar...", "width=25 height=4 font=14 color=White background=None location=[Lower Left] bold overlay label");
 }
