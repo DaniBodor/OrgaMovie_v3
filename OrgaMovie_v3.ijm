@@ -8,7 +8,7 @@ roiManager("reset");
 //%% input parameters
 
 // input/output settings
-input_filetype = "tif";
+input_filetype = "nd2";
 filesize_limit = 16; // max filesize (in GB)
 outdirname = "_Movies";
 Z_step = 2.5;		// microns (can this be read from metadata?)
@@ -36,7 +36,7 @@ scalebarProportion = 0.2; // proportion of image width best matching scale bar w
 
 // progress display settings
 intermediate_times = true;
-setBatchMode(false);
+setBatchMode(false);	// batch mode seemns to auto-deactivate when color projection appears
 
 
 
@@ -69,6 +69,7 @@ for (i = 0; i < im_list.length; i++) {
 	
 	// check filesize and hyperstack-ness
 	openFileAndDoChecks(impath);
+	if (intermediate_times)	before = printTime(before);
 	
 	// if checks not passed, no image will be open at this point
 	// and all further steps will be skipped
@@ -195,18 +196,20 @@ print("macro end");
 
 
 function openFileAndDoChecks(path){
+	print_statement = "check and open file: " + path;
+	print(print_statement);
 	filesize = getFileSize(path);
 	
 	if (filesize > filesize_limit) {
 		print("FILE TOO LARGE TO PROCESS");
-		print("   file size above size limit");
+		print("   file size above size limit of",filesize_limit,"GB");
 		print("   consider splitting image or increasing limit");
 		print("   this file will be skipped");
 	}
 	
 	else{
-		//print("filesize within limit");
-		run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
+		//run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
+		run("Bio-Formats Importer", "open=[&path]");	//opening as non-virtual seems to significantly improve processing speed
 		run("Grays");
 		if (!checkHyperstack())	close();
 	}
@@ -331,10 +334,8 @@ function createDepthLegend(nBands, W, H){
 }
 
 function getFileSize(path){
-	current = "getFileSize: " + path;
-	print(current);
-	
-	// python code to print filesize to log
+
+	// python code to print filesize to log (can't find how to do this from IJ)
 	endex = "||";
 	py= "path = r'" + path + "'\n" +
 		"import os" + "\n" + 
@@ -343,9 +344,9 @@ function getFileSize(path){
 		"log(str(size) + '"+endex+"')";
 	eval ("python",py);
 
-	// find filesize from logwindow
+	// read filesize from logwindow
 	L = getInfo("log");
-	index1 = indexOf(L, current) + lengthOf(current);
+	index1 = indexOf(L, print_statement) + lengthOf(print_statement);
 	index2 = indexOf(L, endex);
 	size = substring(L,index1,index2);
 
