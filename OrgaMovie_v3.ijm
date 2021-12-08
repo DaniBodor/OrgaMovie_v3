@@ -65,7 +65,7 @@ for (i = 0; i < im_list.length; i++) {
 	print("__");
 	im_name = im_list[i];
 	impath = dir + im_name;
-	print ("processing:", im_name);
+	//print ("CURRENT IMAGE:", im_name);
 	
 	// check filesize and hyperstack-ness
 	openFileAndDoChecks(impath);
@@ -208,8 +208,10 @@ function openFileAndDoChecks(path){
 	}
 	
 	else{
+		// opening as non-virtual seems to significantly improve processing speed
+		// but virtual allows for processing larger images
 		//run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
-		run("Bio-Formats Importer", "open=[&path]");	//opening as non-virtual seems to significantly improve processing speed
+		run("Bio-Formats Importer", "open=[&path] autoscale color_mode=Grayscale");	
 		run("Grays");
 		if (!checkHyperstack())	close();
 	}
@@ -353,7 +355,7 @@ function getFileSize(path){
 	// convert to GB
 	G = 1073741824;	// bytes in GB
 	size = parseInt(size)/G;
-	print("\\Update:"+round(size*100)/100 + " GB");
+	print("\\Update:  "+round(size*100)/100 + " GB");
 
 	return size
 }
