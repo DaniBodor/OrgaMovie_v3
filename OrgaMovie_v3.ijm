@@ -383,7 +383,13 @@ function findSignalSpace(boundary){
 	run("Convert to Mask");
 	run("Erode");
 	setThreshold(255, 255);
-	run("Analyze Particles...", "clear add");
+
+	roiManager("reset");
+	minSize = 10000;
+	while (roiManager("count") == 0){
+		run("Analyze Particles...", "size="+minSize+"-Infinity clear add");
+		minSize = minSize/2;
+	}
 	
 	if (roiManager("count") > 1){
 		roiManager("deselect");
