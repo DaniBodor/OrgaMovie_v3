@@ -4,14 +4,16 @@ largeH = 720;
 smallW = 466;
 smallH = 456;
 
-print("\\Clear");
+//print("\\Clear");
 
-path = "C:\\Users\\dani\\Documents\\MyCodes\\OrgaMovie_v3\\test_data\\_Movies\\_RegistrationMatrices\\Point0000_Seq0000.nd2_TrMatrix.txt";
+dir = "C:\\Users\\dani\\Documents\\MyCodes\\OrgaMovie_v3\\test_data\\_Movies\\_RegistrationMatrices" + File.separator;
+path = dir + "Point0000_Seq0000_f1-30.tif_TrMatrix.txt";
+outpath = path + "_modified.txt";
 TransfMatrix = File.openAsString(path);
 
 Matrix_split = split(TransfMatrix, "(RIGID_BODY)");
 
-print(Matrix_split[0]);
+outstring = Matrix_split[0];
 
 for (fr = 1; fr < Matrix_split.length; fr++) {
 	// read lines and get coordinates
@@ -40,6 +42,7 @@ for (fr = 1; fr < Matrix_split.length; fr++) {
 
 	// reshape
 	angle = findAngle(x1,y1,x2,y2);
+	if (nImages == 0) newImage("_TEMP_", "8-bit black", largeW, largeH, 1);
 	makeLine(x1, y1, x2, y2);
 	run("Rotate...", "  angle=" + -angle);
 	run("Scale... ", "x=1 y="+y_factor+" centered");
@@ -48,7 +51,8 @@ for (fr = 1; fr < Matrix_split.length; fr++) {
 	makeLine(x1_+x_shift, y1_+y_shift, x2_+x_shift, y2_+y_shift);
 	
 	getLine(x1_, y1_, x2_, y2_, lineWidth);
-
+	run("Select None");
+	close("_TEMP_");
 	// print results
 	/*
 	print(x1_);
@@ -66,19 +70,21 @@ for (fr = 1; fr < Matrix_split.length; fr++) {
 	new_line7 = d2s(floor(largeW/2),1) + "\t" + d2s(floor(largeH/4),1);
 	new_line8 = d2s(floor(largeW/2),1) + "\t" + d2s(floor(3*largeH/4),1);
 
-	print("\\Update:RIGID_BODY" + lines[0]);
-	//print(lines[0]);
-	print(lines[1]);
-	print(new_line2);
-	print(new_line3);
-	print(new_line4);
-	print("");
-	print(new_line6);
-	print(new_line7);
-	print(new_line8);
-	print("");
-	print("");
+	outstring = outstring + "RIGID_BODY" + lines[0];
+	outstring = outstring + "\n" + lines[1];
+	outstring = outstring + "\n" + new_line2;
+	outstring = outstring + "\n" + new_line3;
+	outstring = outstring + "\n" + new_line4;
+	outstring = outstring + "\n";
+	outstring = outstring + "\n" + new_line6;
+	outstring = outstring + "\n" + new_line7;
+	outstring = outstring + "\n" + new_line8;
+	outstring = outstring + "\n\n";
 }
+
+
+//print(outstring);
+File.saveString(outstring, outpath);
 
 function findAngle(x1,y1,x2,y2){
 	// test
