@@ -24,10 +24,11 @@ crop_boundary = 24;	// pixels
 
 // header settings
 header_height = 48; // pixel height of header
-header_fontsize = round(header_height/3);
+fontsize = round(header_height/3);
 header_pixoffset = 4;
 depth_LUT = "Depth Organoid";
 prj_LUT = "The Real Glow";
+setFont("SansSerif", fontsize, "antialiased");
 
 // scalebar settings
 scalebar_size = 25;	// microns (unused)
@@ -127,19 +128,27 @@ for (i = 0; i < im_list.length; i++) {
 		selectImage(dep_reg);
 		findSignalSpace(crop_boundary);
 
-		// crop projections and save
+		// prep and save separate projections
 		outputArray = newArray(crop, dep_reg);
 		for (x = 0; x < outputArray.length; x++) {
-			selectImage(outputArray[x]);	
+			selectImage(outputArray[x]);
+			// crop image
 			roiManager("select", 0);
 			run("Crop");
 			run("Remove Overlay");	// fix for overlay box in RGB
+			run("Select None");
+
+			// create scale bar and time stamp
+			scalebarsize = findScalebarSize();
+			run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
+			timeStamper();
+			
 			saveAs("Tiff", outdir + im_name + "_" + getTitle());
 			rename(outputArray[x]);	// fixes renaming after saving
 		}
 		if (intermediate_times)	before = printTime(before);
 
-		// create final movies
+		// create and save final movie
 		print("create final movie");
 		fuseImages();
 		savename = outdir + im_name + "_OrgaMovie";
@@ -208,11 +217,11 @@ function openFileAndDoChecks(path){
 	}
 	
 	else{
-		// opening as non-virtual seems to significantly improve processing speed
-		// but virtual allows for processing larger images
+		// opening as non-virtual seems to improve processing speed by ~20%
+		// but virtual allows for processing larger images --> this might be voided by crash in downstream processing
 		//run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
+		//run("Grays");
 		run("Bio-Formats Importer", "open=[&path] autoscale color_mode=Grayscale");	
-		run("Grays");
 		if (!checkHyperstack())	close();
 	}
 	
@@ -464,11 +473,10 @@ function makeHeaderImage(title, type){
 	wleft = getStringWidth(scalemin)+4;
 	wright = getStringWidth(scalemax)+4;
 	wmax = maxOf(wleft,wright);
-	setFont("SansSerif", header_fontsize, "bold antialiased");
 	lut_x = 2*header_pixoffset + wmax;
-	lut_y = header_height-header_fontsize*1.5-1;
+	lut_y = header_height-fontsize*1.5-1;
 	lut_w = im_width-4*header_pixoffset-2*wmax;
-	lut_h = header_fontsize*1.5;
+	lut_h = fontsize*1.5;
 
 
 	// create LUT bar image
@@ -494,7 +502,7 @@ function makeHeaderImage(title, type){
 	for (i = 0; i < nSlices; i++) {
 		setSlice(i+1);
 		setJustification("center");
-		drawString(title, getWidth()/2, header_fontsize + header_pixoffset);			// image title
+		drawString(title, getWidth()/2, fontsize + header_pixoffset);			// image title
 		drawString(scalemin, (wmax/2+header_pixoffset), getHeight-header_pixoffset);				// left of LUT bar
 		drawString(scalemax, getWidth-(wmax/2+header_pixoffset), getHeight-header_pixoffset);	// right of LUT bar
 
@@ -522,8 +530,6 @@ function fuseImages(){
 	makeHeaderImage(header2, "p");
 	rename("HEAD2");
 	
-	// run("Scale Bar...", "width=25 height=4 font=14 color=White background=None location=[Lower Left] bold overlay label");
-	
 	// combine images
 	run("Combine...", "stack1=" + dep_reg + " stack2=" + crop);	// main movies
 	rename("MAIN");
@@ -536,4 +542,17 @@ function fuseImages(){
 		setColor(128,128,128);
 		drawLine(getWidth()/2, 0, getWidth()/2, getHeight());
 	}
+}
+
+
+function timeStamper(){
+	// fix offsetting bug of time stamper in 00:00 format
+	w_dec_form = getStringWidth("00:00");
+	w_num_form = getStringWidth(toString(frames*T_step)+"_");
+	x_corr = w_dec_form - w_num_form;
+	x_pos = 2 + x_corr;
+
+	// stamp time
+	run("Colors...", "foreground=white");
+	run("Time Stamper", "starting=0 interval="+T_step+" x="+x_pos+" y="+getHeight-2+" font="+fontsize+" '00 decimal=0 anti-aliased or=_");
 }
