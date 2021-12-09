@@ -1,20 +1,22 @@
-largeW = 720;
-largeH = 720;
+largeW = 1000;
+largeH = 1000;
 
-smallW = 466;
-smallH = 456;
+smallW = 456;
+smallH = 438;
 
 //print("\\Clear");
 
-dir = "C:\\Users\\dani\\Documents\\MyCodes\\OrgaMovie_v3\\test_data\\_Movies\\_RegistrationMatrices" + File.separator;
-path = dir + "Point0000_Seq0000_f1-30.tif_TrMatrix.txt";
+dir = "C:\\Users\\dani\\Documents\\MyCodes\\OrgaMovie_v3\\test_data\\Regtest3" + File.separator;
+path = dir + "_small_test.txt";
 outpath = path + "_modified.txt";
 TransfMatrix = File.openAsString(path);
+setBatchMode(true)
 
 Matrix_split = split(TransfMatrix, "(RIGID_BODY)");
 
 outstring = Matrix_split[0];
 
+newImage("_TEMP_", "8-bit black", largeW, largeH, 1);
 for (fr = 1; fr < Matrix_split.length; fr++) {
 	// read lines and get coordinates
 	lines = split(Matrix_split[fr],"\n");
@@ -42,7 +44,7 @@ for (fr = 1; fr < Matrix_split.length; fr++) {
 
 	// reshape
 	angle = findAngle(x1,y1,x2,y2);
-	if (nImages == 0) newImage("_TEMP_", "8-bit black", largeW, largeH, 1);
+	
 	makeLine(x1, y1, x2, y2);
 	run("Rotate...", "  angle=" + -angle);
 	run("Scale... ", "x=1 y="+y_factor+" centered");
@@ -52,7 +54,6 @@ for (fr = 1; fr < Matrix_split.length; fr++) {
 	
 	getLine(x1_, y1_, x2_, y2_, lineWidth);
 	run("Select None");
-	close("_TEMP_");
 	// print results
 	/*
 	print(x1_);
@@ -84,6 +85,7 @@ for (fr = 1; fr < Matrix_split.length; fr++) {
 
 
 //print(outstring);
+close("_TEMP_");
 File.saveString(outstring, outpath);
 
 function findAngle(x1,y1,x2,y2){

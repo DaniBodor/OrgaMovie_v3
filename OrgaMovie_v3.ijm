@@ -10,7 +10,7 @@ roiManager("reset");
 // input/output settings
 input_filetype = "nd2";
 filesize_limit = 16; // max filesize (in GB)
-outdirname = "_Movies";
+outdirname = "_OrgaMovies";
 Z_step = 2.5;		// microns (can this be read from metadata?)
 T_step = 3;			// min (can this be read from metadata?)
 framerate = 18;		//fps
@@ -164,6 +164,7 @@ for (i = 0; i < im_list.length; i++) {
 
 }
 //run("Tile");
+for (q = 0; q < 3; q++) 	run("Collect Garbage"); // clear memory
 print("----");
 print("----");
 print("macro end");
