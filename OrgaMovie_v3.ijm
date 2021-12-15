@@ -77,7 +77,6 @@ for (i = 0; i < im_list.length; i++) {
 	}
 
 	// open chunks one by one
-	ori = newArray();
 	for (ch = 0; ch < nImageParts; ch++) {
 		if (chunksArray[0] > 1)	print("    now opening part",ch);
 		// open chunk
@@ -88,7 +87,7 @@ for (i = 0; i < im_list.length; i++) {
 		// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
 
 		rename(outname_base + "_" + t_begin + "-" + t_end);
-		ori[ch] = getTitle();
+		ori = getTitle();
 		getPixelSize(pix_unit, pixelWidth, pixelHeight);
 		Stack.getDimensions(width, height, channels, slices, frames);
 
@@ -107,13 +106,26 @@ for (i = 0; i < im_list.length; i++) {
 		crop = getTitle();
 		if (intermediate_times)	before = printTime(before);
 		
-		// find B&C
-		print("find brightness & contrast settings");
-		setBC();
-		getMinAndMax(minBrightness, maxBrightness);
-		if (intermediate_times)	before = printTime(before);
+		// find B&C (on first chunk, then maintain)
+		if (ch == 0){
+			print("find brightness & contrast settings");
+			setBC();
+			getMinAndMax(minBrightness, maxBrightness);
+			if (intermediate_times)	before = printTime(before);
+		}
 		
+		// create depth coded image
+		print("create depth-coded movie");
+		selectImage(ori);
+		depthCoding();
+		dep_im = getTitle();
+		if (intermediate_times)	before = printTime(before);
+	}
+	CRASH!!!
+	// HERE, I NEED TO CONCATENATE THE DEPTH AND MAX-INT PROJECTIONS
+	
 		// create registration file for drift correction
+		selectImage(crop);
 		print("create registration file");
 		run("Tile");
 		selectImage(crop);
@@ -123,13 +135,7 @@ for (i = 0; i < im_list.length; i++) {
 		run(prj_LUT);
 		if (intermediate_times)	before = printTime(before);
 
-		// create depth coded image
-		print("create depth-coded movie");
-		selectImage(ori);
-		depthCoding();
-		dep_im = getTitle();
-		if (intermediate_times)	before = printTime(before);
-		
+
 		// correct drift on depth coded image
 		print("correct drift on depth code");
 		correctDriftRGB(dep_im);
