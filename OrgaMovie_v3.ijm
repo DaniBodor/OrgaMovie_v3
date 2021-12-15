@@ -9,7 +9,7 @@ roiManager("reset");
 
 // input/output settings
 input_filetype = "nd2";
-filesize_limit = 16; // max filesize (in GB)
+filesize_limit = 2; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
 outdirname = "_OrgaMovies";
 Z_step = 2.5;		// microns (can this be read from metadata?)
 T_step = 3;			// min (can this be read from metadata?)
@@ -66,6 +66,7 @@ for (i = 0; i < im_list.length; i++) {
 	print("__");
 	im_name = im_list[i];
 	impath = dir + im_name;
+	outname_base = File.getNameWithoutExtension(im_name);
 	//print ("CURRENT IMAGE:", im_name);
 	
 	// check filesize and hyperstack-ness
@@ -142,8 +143,8 @@ for (i = 0; i < im_list.length; i++) {
 			scalebarsize = findScalebarSize();
 			run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
 			timeStamper();
-			
-			saveAs("Tiff", outdir + im_name + "_" + getTitle());
+
+			saveAs("Tiff", outdir + outname_base + "_" + getTitle());
 			rename(outputArray[x]);	// fixes renaming after saving
 		}
 		if (intermediate_times)	before = printTime(before);
@@ -151,7 +152,7 @@ for (i = 0; i < im_list.length; i++) {
 		// create and save final movie
 		print("create final movie");
 		fuseImages();
-		savename = outdir + im_name + "_OrgaMovie";
+		savename = outdir + outname_base + "_OrgaMovie";
 		saveAs("Tiff", savename);
 		run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename + ".avi]");
 		roiManager("reset");
