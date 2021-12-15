@@ -67,16 +67,27 @@ for (i = 0; i < im_list.length; i++) {
 	im_name = im_list[i];
 	impath = dir + im_name;
 	outname_base = File.getNameWithoutExtension(im_name);
-	//print ("CURRENT IMAGE:", im_name);
 	
 	// read how many parts image needs to be opened in based on filesize_limit
 	chunksArray = fileChunks(impath); // returns: newArray(nImageParts,sizeT,chunkSize);
+	if (chunksArray[0] > 1)	{
+		print("image is too large to process at once");
+		print("  instead, image will be opened in",nImageParts,"and processed one by one");
+	}
 
-	// if checks not passed, no image will be open at this point
-	// and all further steps will be skipped
-	
-	if(nImages>0){
-		ori = getTitle();
+	// open chunks one by one
+	ori = newArray();
+	for (ch = 0; ch < nImageParts; ch++) {
+		if (chunksArray[0] > 1)	print("    now opening part",ch);
+		// open chunk
+		t_begin = (chunkSize * ch) + 1
+		t_end   = chunkSize * (ch + 1);
+		run("Bio-Formats Importer", "open=[&path] t_begin=&t_begin t_end=&t_end t_step=1" +
+					" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
+		// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
+
+		rename(outname_base + "_" + t_begin + "-" + t_end);
+		ori[ch] = getTitle();
 		getPixelSize(pix_unit, pixelWidth, pixelHeight);
 		Stack.getDimensions(width, height, channels, slices, frames);
 
