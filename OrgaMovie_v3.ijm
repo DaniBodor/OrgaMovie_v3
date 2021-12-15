@@ -151,13 +151,13 @@ for (i = 0; i < im_list.length; i++) {
 			run("Remove Overlay");	// fix for overlay box in RGB
 			run("Select None");
 
+			saveAs("Tiff", outdir + outname_base + "_" + getTitle());
+			rename(outputArray[x]);	// fixes renaming after saving
+
 			// create scale bar and time stamp
 			scalebarsize = findScalebarSize();
 			run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
 			timeStamper();
-
-			saveAs("Tiff", outdir + outname_base + "_" + getTitle());
-			rename(outputArray[x]);	// fixes renaming after saving
 		}
 		if (intermediate_times)	before = printTime(before);
 
