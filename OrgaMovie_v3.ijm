@@ -55,11 +55,12 @@ File.makeDirectory(regdir);
 
 // run on all images
 
+
 for (i = 0; i < im_list.length; i++) {
 
 	// image preliminaries
+	dumpMemory(3);
 	
-	for (q = 0; q < 3; q++) 	run("Collect Garbage"); // clear memory before opening images
 	start = getTime();
 	if (intermediate_times)	before = start;
 	
@@ -591,4 +592,9 @@ function timeStamper(){
 	// stamp time
 	run("Colors...", "foreground=white");
 	run("Time Stamper", "starting=0 interval="+T_step+" x="+x_pos+" y="+getHeight-2+" font="+fontsize+" '00 decimal=0 anti-aliased or=_");
+}
+
+
+function dumpMemory(n){
+	for (i = 0; i < n; i++) 	run("Collect Garbage");
 }
