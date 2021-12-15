@@ -69,12 +69,12 @@ for (i = 0; i < im_list.length; i++) {
 	outname_base = File.getNameWithoutExtension(im_name);
 	//print ("CURRENT IMAGE:", im_name);
 	
-	// check filesize and hyperstack-ness
-	openFileAndDoChecks(impath);
-	if (intermediate_times)	before = printTime(before);
-	
+	// read how many parts image needs to be opened in based on filesize_limit
+	chunksArray = fileChunks(impath); // returns: newArray(nImageParts,sizeT,chunkSize);
+
 	// if checks not passed, no image will be open at this point
 	// and all further steps will be skipped
+	
 	if(nImages>0){
 		ori = getTitle();
 		getPixelSize(pix_unit, pixelWidth, pixelHeight);
@@ -206,30 +206,76 @@ print("macro end");
 		// TIFF split (separate smaller files, can be stored in 8bit grayscale to save MBs, then can add separate package to compile each part in LUT of choice)
 
 
-function openFileAndDoChecks(path){
+function fileChunks(path){
 	print_statement = "check and open file: " + path;
 	print(print_statement);
 	filesize = getFileSize(path);
+
+	nImageParts = Math.ceil(filesize/filesize_limit);
+
+	if (nImageParts == 1)	return newArray(nImageParts,0,0);
+
+	else {
+		run("Bio-Formats Importer", "open=[&path] display_metadata view=[Metadata only]");
+		T = getInfo("window.title");
+		MD = getInfo("window.contents");
+		lines = split(MD,"\n");
+		
+		line9 = split(lines[9],"\t");
+		sizeT = parseInt(line9[1]);
+		chunkSize = Math.ceil(sizeT/nImageParts);
+
+		close(T);
+		
+		return newArray(nImageParts,sizeT,chunkSize);
+	}
 	
+	
+	// everything below return statement is ignored/obsolete
+
 	if (filesize > filesize_limit) {
 		print("FILE TOO LARGE TO PROCESS");
 		print("   file size above size limit of",filesize_limit,"GB");
 		print("   consider splitting image or increasing limit");
 		print("   this file will be skipped");
 	}
-	
+
 	else{
 		// opening as non-virtual seems to improve processing speed by ~20%
-		// but virtual allows for processing larger images --> this might be voided by crash in downstream processing
+		// but virtual allows for processing larger images 
+		//        EDIT: \--> this appears to be voided by crash in downstream processing
 		//run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
 		//run("Grays");
+		
 		run("Bio-Formats Importer", "open=[&path] autoscale color_mode=Grayscale");	
 		if (!checkHyperstack())	close();
 	}
-	
 }
 
+function getFileSize(path){
 
+	// python code to print filesize to log (can't find how to do this from IJ)
+	endex = "||";
+	py= "path = r'" + path + "'\n" +
+		"import os" + "\n" + 
+		"size = os.path.getsize(path)" + "\n" +
+		"from ij.IJ import log" + "\n" +
+		"log(str(size) + '"+endex+"')";
+	eval ("python",py);
+
+	// read filesize from logwindow
+	L = getInfo("log");
+	index1 = indexOf(L, print_statement) + lengthOf(print_statement);
+	index2 = indexOf(L, endex);
+	size = substring(L,index1,index2);
+
+	// convert to GB
+	G = 1073741824;	// bytes in GB
+	size = parseInt(size)/G;
+	print("\\Update:  "+round(size*100)/100 + " GB");
+
+	return size;
+}
 
 function checkHyperstack(){
 	
@@ -344,31 +390,6 @@ function createDepthLegend(nBands, W, H){
 	}
 	run(depth_LUT);
 	
-}
-
-function getFileSize(path){
-
-	// python code to print filesize to log (can't find how to do this from IJ)
-	endex = "||";
-	py= "path = r'" + path + "'\n" +
-		"import os" + "\n" + 
-		"size = os.path.getsize(path)" + "\n" +
-		"from ij.IJ import log" + "\n" +
-		"log(str(size) + '"+endex+"')";
-	eval ("python",py);
-
-	// read filesize from logwindow
-	L = getInfo("log");
-	index1 = indexOf(L, print_statement) + lengthOf(print_statement);
-	index2 = indexOf(L, endex);
-	size = substring(L,index1,index2);
-
-	// convert to GB
-	G = 1073741824;	// bytes in GB
-	size = parseInt(size)/G;
-	print("\\Update:  "+round(size*100)/100 + " GB");
-
-	return size
 }
 
 
