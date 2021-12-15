@@ -213,22 +213,18 @@ function fileChunks(path){
 
 	nImageParts = Math.ceil(filesize/filesize_limit);
 
-	if (nImageParts == 1)	return newArray(nImageParts,0,0);
+	run("Bio-Formats Importer", "open=[&path] display_metadata view=[Metadata only]");
+	T = getInfo("window.title");
+	MD = getInfo("window.contents");
+	lines = split(MD,"\n");
+	
+	line9 = split(lines[9],"\t");
+	sizeT = parseInt(line9[1]);
+	chunkSize = Math.ceil(sizeT/nImageParts);
 
-	else {
-		run("Bio-Formats Importer", "open=[&path] display_metadata view=[Metadata only]");
-		T = getInfo("window.title");
-		MD = getInfo("window.contents");
-		lines = split(MD,"\n");
-		
-		line9 = split(lines[9],"\t");
-		sizeT = parseInt(line9[1]);
-		chunkSize = Math.ceil(sizeT/nImageParts);
-
-		close(T);
-		
-		return newArray(nImageParts,sizeT,chunkSize);
-	}
+	close(T);
+	
+	return newArray(nImageParts,sizeT,chunkSize);
 	
 	
 	// everything below return statement is ignored/obsolete
