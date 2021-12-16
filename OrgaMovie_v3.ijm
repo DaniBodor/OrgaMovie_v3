@@ -1,10 +1,6 @@
 
 requires("1.53f");	// for Array.filter()
 
-print("\\Clear");
-run("Close All");
-roiManager("reset");
-
 //%% input parameters
 
 // input/output settings
@@ -37,10 +33,17 @@ scalebarProportion = 0.2; // proportion of image width best matching scale bar w
 
 // progress display settings
 intermediate_times = true;
-setBatchMode(false);	// batch mode seemns to auto-deactivate when color projection appears
+run_in_background = false;
 
 
+////////////////////////////////////////////// START MACRO //////////////////////////////
 
+// preliminaries
+print("\\Clear");
+run("Close All");
+roiManager("reset");
+setBatchMode(run_in_background);	// batch mode seemns to auto-deactivate when color projection appears
+dumpMemory(3);
 
 // find all images in base directory
 dir = getDirectory("Choose directory with images to process");
