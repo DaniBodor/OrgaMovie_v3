@@ -130,77 +130,106 @@ for (im = 0; im < im_list.length; im++) {
 			}
 			close(ori);
 		}
-	}
-	CRASH!!!
-	// do I really care about closing/reopening in case there is only 1 image?
-	// if yes, would it be easier to put the nImageParts separation before the for nImageParts loop?
-	if (nImageParts > 1){	
 		
-		
-		// HERE, I NEED TO CONCATENATE THE DEPTH AND MAX-INT PROJECTIONS
-
-		// crop around signal and save projection
-		print("first crop around signal");
-		findSignalSpace(crop_boundary);
-		run("Duplicate...", "duplicate title=PRJ");
-		roiManager("select", 0);
-		run("Crop");
-		crop = getTitle();
-		if (intermediate_times)	before = printTime(before);
-
-		// create registration file for drift correction
-		selectImage(crop);
-		print("create registration file");
-		run("Tile");
-		selectImage(crop);
-		setSlice(nSlices/2);
-		TransMatrix_File = regdir + im_name + "_TrMatrix.txt";
-		run("MultiStackReg", "stack_1="+crop+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
-		run(prj_LUT);
-		if (intermediate_times)	before = printTime(before);
-
-
-		// correct drift on depth coded image
-		print("correct drift on depth code");
-		correctDriftRGB(dep_im);
-		dep_reg = getTitle();
-		if (intermediate_times)	before = printTime(before);
-
-		// find final crop
-		print("output intermediates");
-		selectImage(dep_reg);
-		findSignalSpace(crop_boundary);
-
-		// prep and save separate projections
-		outputArray = newArray(crop, dep_reg);
-		for (x = 0; x < outputArray.length; x++) {
-			selectImage(outputArray[x]);
-			// crop image
-			roiManager("select", 0);
-			run("Crop");
-			run("Remove Overlay");	// fix for overlay box in RGB
-			run("Select None");
-
-			saveAs("Tiff", outdir + outname_base + "_" + getTitle());
-			rename(outputArray[x]);	// fixes renaming after saving
-
-			// create scale bar and time stamp
-			scalebarsize = findScalebarSize();
-			run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
-			timeStamper();
+		// create depth coded image
+		print("create depth-coded movie");
+		if (nImageParts == 1){
+			// ######## add crop function here to speed up depth coding
+			_ = 1;	// placeholder
 		}
+		selectImage(ori);
+		depthCoding();
+		dep_im = getTitle();
 		if (intermediate_times)	before = printTime(before);
 
-		// create and save final movie
-		print("create final movie");
-		fuseImages();
-		savename = outdir + outname_base + "_OrgaMovie";
-		saveAs("Tiff", savename);
-		run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename + ".avi]");
-		roiManager("reset");
-		if (intermediate_times)	before = printTime(before);
-
+		// save intermediates
+		outputArray = newArray(prj,dep_im);
+		for (i = 0; i < outputArray.length; i++) {
+			selectImage(outputArray[i]);
+			saveAs("Tiff", outdir + getTitle());
+			close();
+		}
+		close(ori);
 	}
+	
+	// Now assemble separate parts, register and make OrgaMovie
+	print("____ opening max projection of all parts ____");
+	run("Image Sequence...", "select="+outdir+" dir="+outdir+" type=16-bit filter=PRJMAX_ sort");
+	rename("PRJ");
+	prj_concat = getTitle();
+	deleteIntermediates("PRJMAX", outdir);
+	if (intermediate_times)	before = printTime(before);
+
+	// crop around signal and save projection
+	print("first crop and registration");
+	findSignalSpace(crop_boundary);
+	roiManager("select", roiManager("count")-1);
+	run("Crop");
+	
+	// create registration file for drift correction
+	print("create registration file");
+	selectImage(prj_concat);
+	setSlice(nSlices/2);
+	TransMatrix_File = outdir + outname_base + "_TrMatrix.txt";
+	run("MultiStackReg", "stack_1="+prj_concat+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
+	run(prj_LUT);
+	if (intermediate_times)	before = printTime(before);
+
+
+
+	// open MAX and COLOR- projections
+	print("opening color projection of all parts");
+	run("Image Sequence...", "select="+outdir+" type=RGB dir="+outdir+" filter=PRJCOL_ sort");
+	rename("PRJCOL_" + outname_base);
+	rgb_concat = getTitle();
+	deleteIntermediates("PRJCOL", outdir);
+	if (intermediate_times)	before = printTime(before);
+
+	// correct drift on depth coded image
+	print("correct drift on depth code");
+	roiManager("select", roiManager("count")-1);
+	run("Crop");
+	
+	correctDriftRGB(rgb_concat);
+	dep_reg = getTitle();
+	if (intermediate_times)	before = printTime(before);
+
+	// find final crop
+	print("output intermediates");
+	selectImage(prj_concat);
+	findSignalSpace(crop_boundary);
+
+
+	// prep and save separate projections
+	outputArray = newArray(prj_concat, dep_reg);
+	for (x = 0; x < outputArray.length; x++) {
+		selectImage(outputArray[x]);
+		// crop image
+		roiManager("select", roiManager("count")-1);
+		run("Crop");
+		run("Remove Overlay");	// fix for overlay box in RGB (obsolete?)
+		run("Select None");
+
+		saveAs("Tiff", outdir + outname_base + "_" + getTitle());
+		rename(outputArray[x]);	// fixes renaming after saving
+
+		// create scale bar and time stamp
+		scalebarsize = findScalebarSize();
+		run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
+		timeStamper();
+	}
+	if (intermediate_times)	before = printTime(before);
+
+	// create and save final movie
+	print("assemble into OrgaMovie");
+	fuseImages();
+	savename = outdir + outname_base + "_OrgaMovie";
+	saveAs("Tiff", savename);
+	run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename + ".avi]");
+	roiManager("reset");
+	if (intermediate_times)	before = printTime(before);
+
+	print("Finished processing",im_name);
 	time = round((getTime() - start)/1000);
 	print("image took",time,"seconds to process");
 	run("Close All");
