@@ -91,7 +91,7 @@ for (im = 0; im < im_list.length; im++) {
 						" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
 			// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
 	
-			rename(outname_base + "_" + IJ.pad(t_begin,4) + "-" + IJ.pad(t_end,4));
+			if (nImageParts > 1)	rename(outname_base + "_" + IJ.pad(t_begin,4) + "-" + IJ.pad(t_end,4));
 			ori = getTitle();
 			getPixelSize(pix_unit, pixelWidth, pixelHeight);
 			Stack.getDimensions(width, height, channels, slices, frames);
@@ -112,8 +112,11 @@ for (im = 0; im < im_list.length; im++) {
 			
 			// create depth coded image
 			print("create depth-coded movie");
+			if (nImageParts == 1){
+				// ######## add crop function here to speed up depth coding
+				_ = 1;	// placeholder
+			}
 			selectImage(ori);
-			// ###### consider adding a crop here if (nImageParts == 1); this speeds up depth coding considerably
 			depthCoding();
 			dep_im = getTitle();
 			if (intermediate_times)	before = printTime(before);
@@ -129,7 +132,12 @@ for (im = 0; im < im_list.length; im++) {
 		}
 	}
 	CRASH!!!
-	// HERE, I NEED TO CONCATENATE THE DEPTH AND MAX-INT PROJECTIONS
+	// do I really care about closing/reopening in case there is only 1 image?
+	// if yes, would it be easier to put the nImageParts separation before the for nImageParts loop?
+	if (nImageParts > 1){	
+		
+		
+		// HERE, I NEED TO CONCATENATE THE DEPTH AND MAX-INT PROJECTIONS
 
 		// crop around signal and save projection
 		print("first crop around signal");
