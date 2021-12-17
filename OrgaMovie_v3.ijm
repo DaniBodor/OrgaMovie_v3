@@ -5,17 +5,18 @@ requires("1.53f");	// for Array.filter()
 
 // input/output settings
 input_filetype = "tif";
-filesize_limit = 0.1; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
+filesize_limit = 0.2; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
 outdirname = "_OrgaMovies";
 Z_step = 2.5;		// microns (can this be read from metadata?)
 T_step = 3;			// min (can this be read from metadata?)
 framerate = 18;		//fps
 
-// layout settings
+// visual settings
 minBrightnessFactor	= 1;
 min_thresh_meth		= "Percentile";
 overexp_percile = 0.1;	// unused
 saturate = 0.01;	// saturation value used for contrasting
+crop_threshold = "MinError";
 crop_boundary = 24;	// pixels
 
 // header settings
@@ -33,8 +34,18 @@ scalebarProportion = 0.2; // proportion of image width best matching scale bar w
 
 // progress display settings
 intermediate_times = true;
-run_in_background = false;
+run_in_background = false;	//apparently buggy; don't understand why
 
+// bug with batch mode: 
+/*
+ Error:		The product of channels (1), slices (1)
+ and frames (15) must equal the stack size (1). in line 511:
+		(called from line 129)
+	
+		run ( "Properties..." , "channels=1 slices=1 frames=" + frames + " pixel_width=" + pixelWidth + " pixel_height=" + pixe...
+
+ */
+// interetingly, the first run after testing in batch mode will crash at same point, but only in cycle 2
 
 ////////////////////////////////////////////// START MACRO //////////////////////////////
 
@@ -42,6 +53,7 @@ run_in_background = false;
 print("\\Clear");
 run("Close All");
 roiManager("reset");
+roiManager("Show None");
 setBatchMode(run_in_background);	// batch mode seemns to auto-deactivate when color projection appears
 dumpMemory(3);
 
@@ -52,13 +64,19 @@ im_list = Array.filter(list,"."+input_filetype);
 
 // prep output folders
 outdir = dir + outdirname + File.separator;
-File.makeDirectory(outdir);
-regdir = outdir + "_RegistrationMatrices" + File.separator;
-File.makeDirectory(regdir);
+if (im_list.length > 0) File.makeDirectory(outdir);
+else	{
+	print("***MACRO ABORTED***");
+	print("no files containing:",input_filetype);
+	print("were found in: "+dir);
+	exit(getInfo("log"));
+}
+
+
+
+print("running OrgaMovie macro on:", dir);
 
 // run on all images
-
-
 for (im = 0; im < im_list.length; im++) {
 
 	// image preliminaries
@@ -67,7 +85,6 @@ for (im = 0; im < im_list.length; im++) {
 	start = getTime();
 	if (intermediate_times)	before = start;
 	
-	print("__");
 	im_name = im_list[im];
 	impath = dir + im_name;
 	outname_base = File.getNameWithoutExtension(im_name);
@@ -82,7 +99,9 @@ for (im = 0; im < im_list.length; im++) {
 
 	// open chunks one by one
 	for (ch = 0; ch < nImageParts; ch++) {
-		if (nImageParts > 1)	print("  now processing part",ch+1,"of",nImageParts);
+		if (nImageParts > 1)	print("____ now processing part",ch+1,"of",nImageParts,"____");
+		run("Close All");	//backup in case something remained open by accident; avoids bugs
+		
 		// open chunk
 		t_begin = (chunkSize * ch) + 1;
 		t_end   = chunkSize * (ch + 1);
@@ -234,6 +253,8 @@ for (im = 0; im < im_list.length; im++) {
 	print("image took",time,"seconds to process");
 	run("Close All");
 
+	File.delete(TransMatrix_File);
+	print("\\Update:____________________________");
 }
 //run("Tile");
 for (q = 0; q < 3; q++) 	run("Collect Garbage"); // clear memory
@@ -292,6 +313,7 @@ function fileChunks(path){
 	line9 = split(lines[9],"\t");
 	sizeT = parseInt(line9[1]);
 	chunkSize = Math.ceil(sizeT/nImageParts);
+	nImageParts = Math.ceil(sizeT/chunkSize);
 
 	close(T);
 	
@@ -468,7 +490,7 @@ function findSignalSpace(boundary){
 	if (bitDepth() == 24)	run("8-bit");
 	
 	// find crop outline
-	setAutoThreshold("MinError dark");
+	setAutoThreshold(crop_threshold + " dark");
 	setOption("BlackBackground", false);
 	run("Convert to Mask");
 	run("Erode");
@@ -503,18 +525,16 @@ function depthCoding(){
 	run("Re-order Hyperstack ...", "channels=[Channels (c)] slices=[Frames (t)] frames=[Slices (z)]");
 	setMinAndMax(minBrightness, maxBrightness);
 	wait(500);	// avoids a crash
-	//waitForUser("2");
 	run("8-bit");
 	run("Grays");
 	dumpMemory(1);
 	
 
 	// run color coding
-	imname = getTitle();
+	precolorname = getTitle();
 	if (run_in_background)	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices+" batch");
 	else					run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices);
-	rename("COLOR_" + imname);
-	depim = getTitle();
+	rename("PRJCOL_" + precolorname);
 	dumpMemory(3);
 
 	// reset dimensions
@@ -597,7 +617,7 @@ function makeHeaderImage(title, type){
 	setColor(255,255,255);
 
 	// create header image
-	newImage(title, "RGB black", im_width, header_height, frames);
+	newImage(title, "RGB black", im_width, header_height, sizeT);
 	head = getTitle();
 	Stack.setXUnit(pix_unit);
 	run("Properties...", "pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
@@ -620,7 +640,7 @@ function makeHeaderImage(title, type){
 
 function fuseImages(){
 	// apply LUT to normal projection
-	selectImage(crop);
+	selectImage(prj_concat);
 	run(prj_LUT);
 	setMinAndMax(minBrightness, maxBrightness);
 	run("RGB Color");
@@ -635,7 +655,7 @@ function fuseImages(){
 	rename("HEAD2");
 	
 	// combine images
-	run("Combine...", "stack1=" + dep_reg + " stack2=" + crop);	// main movies
+	run("Combine...", "stack1=" + dep_reg + " stack2=" + prj_concat);	// main movies
 	rename("MAIN");
 	run("Combine...", "stack1=HEAD1 stack2=HEAD2"); // headers
 	rename("HEADS");
@@ -645,6 +665,21 @@ function fuseImages(){
 		setSlice(n+1);
 		setColor(128,128,128);
 		drawLine(getWidth()/2, 0, getWidth()/2, getHeight());
+	}
+}
+
+function deleteIntermediates(filestart, directory){
+	L = getFileList(directory);
+	for (i = 0; i < L.length; i++) {
+		if (startsWith(L[i], filestart)){
+			File.delete(directory + L[i]);
+
+			// this prints a 1, which I want to get rid of...
+			Log = getInfo("log");
+			Log = substring(Log, 0, lengthOf(Log)-3);
+			print("\\Clear");
+			print(Log);
+		}
 	}
 }
 
