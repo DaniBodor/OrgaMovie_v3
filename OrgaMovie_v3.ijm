@@ -86,20 +86,50 @@ for (im = 0; im < im_list.length; im++) {
 		// open chunk
 		t_begin = (chunkSize * ch) + 1;
 		t_end   = chunkSize * (ch + 1);
-		run("Bio-Formats Importer", "open=[&path] t_begin=&t_begin t_end=&t_end t_step=1" +
-					" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
-		// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
-
-		rename(outname_base + "_" + t_begin + "-" + t_end);
-		ori = getTitle();
-		getPixelSize(pix_unit, pixelWidth, pixelHeight);
-		Stack.getDimensions(width, height, channels, slices, frames);
-
-		// make projection & crop
-		print("making projection");
-		run("Z Project...", "projection=[Max Intensity] all");
-		prj = getTitle();
-		if (intermediate_times)	before = printTime(before);
+		if (t_begin<=sizeT) {	// catches potential rounding errors which I don't think can happen (can't be bothered to work it out tho); abundance of safety, etc
+			run("Bio-Formats Importer", "open=["+impath+"] t_begin="+t_begin+" t_end="+t_end+" t_step=1" +
+						" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
+			// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
+	
+			rename(outname_base + "_" + IJ.pad(t_begin,4) + "-" + IJ.pad(t_end,4));
+			ori = getTitle();
+			getPixelSize(pix_unit, pixelWidth, pixelHeight);
+			Stack.getDimensions(width, height, channels, slices, frames);
+	
+			// make projection
+			print("making projection");
+			run("Z Project...", "projection=[Max Intensity] all");
+			prj = getTitle();
+			if (intermediate_times)	before = printTime(before);
+	
+			// find B&C (on first chunk, then maintain)
+			if (ch == 0){
+				print("find brightness & contrast settings");
+				setBC();
+				getMinAndMax(minBrightness, maxBrightness);
+				if (intermediate_times)	before = printTime(before);
+			}
+			
+			// create depth coded image
+			print("create depth-coded movie");
+			selectImage(ori);
+			// ###### consider adding a crop here if (nImageParts == 1); this speeds up depth coding considerably
+			depthCoding();
+			dep_im = getTitle();
+			if (intermediate_times)	before = printTime(before);
+	
+			// save intermediates
+			outputArray = newArray(prj,dep_im);
+			for (i = 0; i < outputArray.length; i++) {
+				selectImage(outputArray[i]);
+				saveAs("Tiff", outdir + getTitle());
+				close();
+			}
+			close(ori);
+		}
+	}
+	CRASH!!!
+	// HERE, I NEED TO CONCATENATE THE DEPTH AND MAX-INT PROJECTIONS
 
 		// crop around signal and save projection
 		print("first crop around signal");
@@ -109,25 +139,7 @@ for (im = 0; im < im_list.length; im++) {
 		run("Crop");
 		crop = getTitle();
 		if (intermediate_times)	before = printTime(before);
-		
-		// find B&C (on first chunk, then maintain)
-		if (ch == 0){
-			print("find brightness & contrast settings");
-			setBC();
-			getMinAndMax(minBrightness, maxBrightness);
-			if (intermediate_times)	before = printTime(before);
-		}
-		
-		// create depth coded image
-		print("create depth-coded movie");
-		selectImage(ori);
-		depthCoding();
-		dep_im = getTitle();
-		if (intermediate_times)	before = printTime(before);
-	}
-	CRASH!!!
-	// HERE, I NEED TO CONCATENATE THE DEPTH AND MAX-INT PROJECTIONS
-	
+
 		// create registration file for drift correction
 		selectImage(crop);
 		print("create registration file");
@@ -449,16 +461,24 @@ function findSignalSpace(boundary){
 }
 
 function depthCoding(){
-	// crop according to previously found size
-	roiManager("select", 0);
-	run("Duplicate...", "title=hyperstack_region duplicate");
-	hstack_crop = getTitle();
 
-	// swap frames and slices 
+	// prep image (swap frames/slices -> 8-bit -> set B&C
 	run("Re-order Hyperstack ...", "channels=[Channels (c)] slices=[Frames (t)] frames=[Slices (z)]");
 	setMinAndMax(minBrightness, maxBrightness);
-	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices);
+	wait(500);	// avoids a crash
+	//waitForUser("2");
+	run("8-bit");
+	run("Grays");
+	dumpMemory(1);
+	
+
+	// run color coding
+	imname = getTitle();
+	if (run_in_background)	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices+" batch");
+	else					run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices);
+	rename("COLOR_" + imname);
 	depim = getTitle();
+	dumpMemory(3);
 
 	// reset dimensions
 	Stack.setXUnit(pix_unit);
