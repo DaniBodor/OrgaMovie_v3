@@ -4,8 +4,8 @@ requires("1.53f");	// for Array.filter()
 //%% input parameters
 
 // input/output settings
-input_filetype = "nd2";
-filesize_limit = 2; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
+input_filetype = "tif";
+filesize_limit = 0.1; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
 outdirname = "_OrgaMovies";
 Z_step = 2.5;		// microns (can this be read from metadata?)
 T_step = 3;			// min (can this be read from metadata?)
@@ -59,7 +59,7 @@ File.makeDirectory(regdir);
 // run on all images
 
 
-for (i = 0; i < im_list.length; i++) {
+for (im = 0; im < im_list.length; im++) {
 
 	// image preliminaries
 	dumpMemory(3);
@@ -68,22 +68,23 @@ for (i = 0; i < im_list.length; i++) {
 	if (intermediate_times)	before = start;
 	
 	print("__");
-	im_name = im_list[i];
+	im_name = im_list[im];
 	impath = dir + im_name;
 	outname_base = File.getNameWithoutExtension(im_name);
 	
 	// read how many parts image needs to be opened in based on filesize_limit
 	chunksArray = fileChunks(impath); // returns: newArray(nImageParts,sizeT,chunkSize);
-	if (chunksArray[0] > 1)	{
-		print("image is too large to process at once");
-		print("  instead, image will be opened in",nImageParts,"and processed one by one");
-	}
+	nImageParts = chunksArray[0];
+	sizeT		= chunksArray[1];
+	chunkSize	= chunksArray[2];
+	
+	if (nImageParts > 1)	print("image is too large to process at once and will be processed in", nImageParts, "parts instead");
 
 	// open chunks one by one
 	for (ch = 0; ch < nImageParts; ch++) {
-		if (chunksArray[0] > 1)	print("    now opening part",ch);
+		if (nImageParts > 1)	print("  now processing part",ch+1,"of",nImageParts);
 		// open chunk
-		t_begin = (chunkSize * ch) + 1
+		t_begin = (chunkSize * ch) + 1;
 		t_end   = chunkSize * (ch + 1);
 		run("Bio-Formats Importer", "open=[&path] t_begin=&t_begin t_end=&t_end t_step=1" +
 					" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
