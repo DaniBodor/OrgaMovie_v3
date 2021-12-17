@@ -105,49 +105,28 @@ for (im = 0; im < im_list.length; im++) {
 		// open chunk
 		t_begin = (chunkSize * ch) + 1;
 		t_end   = chunkSize * (ch + 1);
-		if (t_begin<=sizeT) {	// catches potential rounding errors which I don't think can happen (can't be bothered to work it out tho); abundance of safety, etc
-			run("Bio-Formats Importer", "open=["+impath+"] t_begin="+t_begin+" t_end="+t_end+" t_step=1" +
-						" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
-			// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
-	
-			if (nImageParts > 1)	rename(outname_base + "_" + IJ.pad(t_begin,4) + "-" + IJ.pad(t_end,4));
-			ori = getTitle();
-			getPixelSize(pix_unit, pixelWidth, pixelHeight);
-			Stack.getDimensions(width, height, channels, slices, frames);
-	
-			// make projection
-			print("making projection");
-			run("Z Project...", "projection=[Max Intensity] all");
-			prj = getTitle();
+		run("Bio-Formats Importer", "open=["+impath+"] t_begin="+t_begin+" t_end="+t_end+" t_step=1" +
+					" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
+		// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
+
+		if (nImageParts > 1)	rename(outname_base + "_" + IJ.pad(t_begin,4) + "-" + IJ.pad(t_end,4));
+		ori = getTitle();
+		getPixelSize(pix_unit, pixelWidth, pixelHeight);
+		Stack.getDimensions(width, height, channels, slices, frames);
+
+		// make projection
+		print("making projection");
+		run("Z Project...", "projection=[Max Intensity] all");
+		rename("PRJ"+getTitle());
+		prj = getTitle();
+		if (intermediate_times)	before = printTime(before);
+
+		// find B&C (on first chunk, then maintain)
+		if (ch == 0){
+			print("find brightness & contrast settings");
+			setBC();
+			getMinAndMax(minBrightness, maxBrightness);
 			if (intermediate_times)	before = printTime(before);
-	
-			// find B&C (on first chunk, then maintain)
-			if (ch == 0){
-				print("find brightness & contrast settings");
-				setBC();
-				getMinAndMax(minBrightness, maxBrightness);
-				if (intermediate_times)	before = printTime(before);
-			}
-			
-			// create depth coded image
-			print("create depth-coded movie");
-			if (nImageParts == 1){
-				// ######## add crop function here to speed up depth coding
-				_ = 1;	// placeholder
-			}
-			selectImage(ori);
-			depthCoding();
-			dep_im = getTitle();
-			if (intermediate_times)	before = printTime(before);
-	
-			// save intermediates
-			outputArray = newArray(prj,dep_im);
-			for (i = 0; i < outputArray.length; i++) {
-				selectImage(outputArray[i]);
-				saveAs("Tiff", outdir + getTitle());
-				close();
-			}
-			close(ori);
 		}
 		
 		// create depth coded image
