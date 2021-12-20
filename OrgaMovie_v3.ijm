@@ -284,7 +284,7 @@ function fileChunks(path){
 
 	nImageParts = Math.ceil(filesize/filesize_limit);
 
-	run("Bio-Formats Importer", "open=[&path] display_metadata view=[Metadata only]");
+	run("Bio-Formats Importer", "open=["+path+"] display_metadata view=[Metadata only]");
 	T = getInfo("window.title");
 	MD = getInfo("window.contents");
 	lines = split(MD,"\n");
@@ -309,13 +309,7 @@ function fileChunks(path){
 	}
 
 	else{
-		// opening as non-virtual seems to improve processing speed by ~20%
-		// but virtual allows for processing larger images 
-		//        EDIT: \--> this appears to be voided by crash in downstream processing
-		//run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
-		//run("Grays");
-		
-		run("Bio-Formats Importer", "open=[&path] autoscale color_mode=Grayscale");	
+		run("Bio-Formats Importer", "open=["+path+"] autoscale color_mode=Grayscale");	
 		if (!checkHyperstack())	close();
 	}
 }
@@ -384,7 +378,7 @@ function setBC(){
 	
 	// get max brightness setting based on percentile of overexposed pixels
 	//maxT = getPercentile(overexp_percile);
-	run("Enhance Contrast", "saturated=&saturate");
+	run("Enhance Contrast", "saturated=+"saturate);
 	getMinAndMax(_, maxT);
 
 	// set min and max according to rules above
