@@ -287,21 +287,7 @@ function fileChunks(path){
 	close(T);
 	
 	return newArray(nImageParts,sizeT,chunkSize);
-	
-	
-	// everything below return statement is ignored/obsolete
 
-	if (filesize > filesize_limit) {
-		print("FILE TOO LARGE TO PROCESS");
-		print("   file size above size limit of",filesize_limit,"GB");
-		print("   consider splitting image or increasing limit");
-		print("   this file will be skipped");
-	}
-
-	else{
-		run("Bio-Formats Importer", "open=["+path+"] autoscale color_mode=Grayscale");	
-		if (!checkHyperstack())	close();
-	}
 }
 
 function getFileSize(path){
@@ -497,14 +483,6 @@ function depthCoding(){
 }
 
 
-function printTime(before){
-	after = getTime();
-	time = round((after - before)/1000);
-	print("    this process took",time,"seconds");
-	
-	return after;
-}
-
 function findScalebarSize(){
 	// get ideal width for scale bar
 	fullW = getWidth() * pixelWidth;
@@ -649,6 +627,18 @@ function timeStamper(){
 	run("Colors...", "foreground=white");
 	run("Time Stamper", "starting=0 interval="+T_step+" x="+x_pos+" y="+getHeight-2+" font="+fontsize+" '00 decimal=0 anti-aliased or=_");
 }
+
+
+
+
+function printTime(before){
+	after = getTime();
+	time = round((after - before)/1000);
+	print("    this process took",time,"seconds");
+	
+	return after;
+}
+
 
 
 function printDateTime(suffix){
