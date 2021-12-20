@@ -66,6 +66,7 @@ im_list = Array.filter(list,"."+input_filetype);
 outdir = dir + outdirname + File.separator;
 if (im_list.length > 0) File.makeDirectory(outdir);
 else	{
+	printDateTime("");
 	print("***MACRO ABORTED***");
 	print("no files containing:",input_filetype);
 	print("were found in: "+dir);
@@ -74,7 +75,7 @@ else	{
 
 
 
-print("running OrgaMovie macro on:", dir);
+printDateTime("running OrgaMovie macro on: "+ dir);
 
 // run on all images
 for (im = 0; im < im_list.length; im++) {
@@ -169,7 +170,6 @@ for (im = 0; im < im_list.length; im++) {
 	selectImage(prj_concat);
 	setSlice(nSlices/2);
 	TransMatrix_File = outdir + outname_base + "_TrMatrix.txt";
-	print("matrix file", TransMatrix_File);
 	run("MultiStackReg", "stack_1="+prj_concat+" action_1=Align file_1=["+TransMatrix_File+"] stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
 	run(prj_LUT);
 	if (intermediate_times)	before = printTime(before);
@@ -227,9 +227,10 @@ for (im = 0; im < im_list.length; im++) {
 	roiManager("reset");
 	if (intermediate_times)	before = printTime(before);
 
-	print("Finished processing",im_name);
+	printDateTime("Finished processing "+im_name);
 	time = round((getTime() - start)/1000);
-	print("image took",time,"seconds to process");
+	timeformat = d2s(floor(time/60),0) + ":" + IJ.pad(time%60,2);
+	if (intermediate_times)		print("    image took",timeformat,"min to process");
 	run("Close All");
 
 	File.delete(TransMatrix_File);
@@ -279,7 +280,7 @@ print("macro end");
 
 function fileChunks(path){
 	print_statement = "check and open file: " + path;
-	print(print_statement);
+	printDateTime(print_statement);
 	filesize = getFileSize(path);
 
 	nImageParts = Math.ceil(filesize/filesize_limit);
@@ -660,6 +661,22 @@ function timeStamper(){
 	run("Time Stamper", "starting=0 interval="+T_step+" x="+x_pos+" y="+getHeight-2+" font="+fontsize+" '00 decimal=0 anti-aliased or=_");
 }
 
+
+function printDateTime(suffix){
+	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+
+	yr = substring (d2s(year,0),2);
+	mth = IJ.pad(month+1,2);
+	day = IJ.pad(dayOfMonth,2);
+	date = yr + mth + day;
+
+	h 	= IJ.pad(hour,2);
+	min = IJ.pad(minute,2);
+	sec = IJ.pad(second,2);
+	time = h + ":" + min + ":" + sec;
+
+	print(date, time, "-", suffix);
+}
 
 function dumpMemory(n){
 	for (i = 0; i < n; i++) 	run("Collect Garbage");
