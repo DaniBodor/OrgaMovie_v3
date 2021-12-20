@@ -169,10 +169,10 @@ for (im = 0; im < im_list.length; im++) {
 	selectImage(prj_concat);
 	setSlice(nSlices/2);
 	TransMatrix_File = outdir + outname_base + "_TrMatrix.txt";
-	run("MultiStackReg", "stack_1="+prj_concat+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
+	print("matrix file", TransMatrix_File);
+	run("MultiStackReg", "stack_1="+prj_concat+" action_1=Align file_1=["+TransMatrix_File+"] stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
 	run(prj_LUT);
 	if (intermediate_times)	before = printTime(before);
-
 
 
 	// open MAX and COLOR- projections
@@ -378,7 +378,7 @@ function setBC(){
 	
 	// get max brightness setting based on percentile of overexposed pixels
 	//maxT = getPercentile(overexp_percile);
-	run("Enhance Contrast", "saturated=+"saturate);
+	run("Enhance Contrast", "saturated="+saturate);
 	getMinAndMax(_, maxT);
 
 	// set min and max according to rules above
@@ -387,15 +387,6 @@ function setBC(){
 }
 
 
-
-
-
-function getTransformationMatrix(){
-	//%% make transformation matrix file
-	im = getTitle();
-	// register and save matrix
-	run("MultiStackReg", "stack_1="+cropped+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
-}
 
 function correctDriftRGB(im){
 	// %% use transformatin matrix to correct drift
