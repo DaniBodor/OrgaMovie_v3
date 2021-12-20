@@ -32,18 +32,8 @@ scalebarProportion = 0.2; // proportion of image width best matching scale bar w
 
 // progress display settings
 intermediate_times = true;
-run_in_background = false;	//apparently buggy; don't understand why
+run_in_background = false;	//apparently buggy; don't understand why. see issues for info on bug
 
-// bug with batch mode: 
-/*
- Error:		The product of channels (1), slices (1)
- and frames (15) must equal the stack size (1). in line 511:
-		(called from line 129)
-	
-		run ( "Properties..." , "channels=1 slices=1 frames=" + frames + " pixel_width=" + pixelWidth + " pixel_height=" + pixe...
-
- */
-// interetingly, the first run after testing in batch mode will crash at same point, but only in cycle 2
 
 ////////////////////////////////////////////// START MACRO //////////////////////////////
 
