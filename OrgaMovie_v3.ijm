@@ -235,6 +235,8 @@ for (im = 0; im < im_list.length; im++) {
 
 	File.delete(TransMatrix_File);
 	print("\\Update:____________________________");
+	selectWindow("Log");
+	saveAs("Text", outdir + "Log.txt");
 }
 //run("Tile");
 for (q = 0; q < 3; q++) 	run("Collect Garbage"); // clear memory
