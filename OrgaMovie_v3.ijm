@@ -6,21 +6,20 @@ run("Close All");
 roiManager("reset");
 dumpMemory(3);
 
-//%% input parameters
-
 // input/output settings
-input_filetype = "nd2";
-filesize_limit = 2; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
+input_filetype = "tif";
+filesize_limit = 0.2; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
 outdirname = "_OrgaMovies";
 Z_step = 2.5;		// microns (can this be read from metadata?)
 T_step = 3;			// min (can this be read from metadata?)
 framerate = 18;		//fps
 
-// layout settings
+// visual settings
 minBrightnessFactor	= 1;
 min_thresh_meth		= "Percentile";
 overexp_percile = 0.1;	// unused
 saturate = 0.01;	// saturation value used for contrasting
+crop_threshold = "MinError";
 crop_boundary = 24;	// pixels
 
 // header settings
@@ -38,10 +37,28 @@ scalebarProportion = 0.2; // proportion of image width best matching scale bar w
 
 // progress display settings
 intermediate_times = true;
-setBatchMode(false);	// batch mode seemns to auto-deactivate when color projection appears
+run_in_background = false;	//apparently buggy; don't understand why
 
+// bug with batch mode: 
+/*
+ Error:		The product of channels (1), slices (1)
+ and frames (15) must equal the stack size (1). in line 511:
+		(called from line 129)
+	
+		run ( "Properties..." , "channels=1 slices=1 frames=" + frames + " pixel_width=" + pixelWidth + " pixel_height=" + pixe...
 
+ */
+// interetingly, the first run after testing in batch mode will crash at same point, but only in cycle 2
 
+////////////////////////////////////////////// START MACRO //////////////////////////////
+
+// preliminaries
+print("\\Clear");
+run("Close All");
+roiManager("reset");
+roiManager("Show None");
+setBatchMode(run_in_background);	// batch mode seemns to auto-deactivate when color projection appears
+dumpMemory(3);
 
 // find all images in base directory
 dir = getDirectory("Choose directory with images to process");
@@ -50,120 +67,178 @@ im_list = Array.filter(list,"."+input_filetype);
 
 // prep output folders
 outdir = dir + outdirname + File.separator;
-File.makeDirectory(outdir);
-regdir = outdir + "_RegistrationMatrices" + File.separator;
-File.makeDirectory(regdir);
+if (im_list.length > 0) File.makeDirectory(outdir);
+else	{
+	printDateTime("");
+	print("***MACRO ABORTED***");
+	print("no files containing:",input_filetype);
+	print("were found in: "+dir);
+	exit(getInfo("log"));
+}
+
+
+
+printDateTime("running OrgaMovie macro on: "+ dir);
 
 // run on all images
-
-for (i = 0; i < im_list.length; i++) {
+for (im = 0; im < im_list.length; im++) {
 
 	// image preliminaries
 	dumpMemory(3);
 	start = getTime();
 	if (intermediate_times)	before = start;
 	
-	print("__");
-	im_name = im_list[i];
+	im_name = im_list[im];
 	impath = dir + im_name;
 	outname_base = File.getNameWithoutExtension(im_name);
-	//print ("CURRENT IMAGE:", im_name);
 	
-	// check filesize and hyperstack-ness
-	openFileAndDoChecks(impath);
-	if (intermediate_times)	before = printTime(before);
+	// read how many parts image needs to be opened in based on filesize_limit
+	chunksArray = fileChunks(impath); // returns: newArray(nImageParts,sizeT,chunkSize);
+	nImageParts = chunksArray[0];
+	sizeT		= chunksArray[1];
+	chunkSize	= chunksArray[2];
 	
-	// if checks not passed, no image will be open at this point
-	// and all further steps will be skipped
-	if(nImages>0){
+	if (nImageParts > 1)	print("image is too large to process at once and will be processed in", nImageParts, "parts instead");
+
+	// open chunks one by one
+	for (ch = 0; ch < nImageParts; ch++) {
+		if (nImageParts > 1)	print("____ now processing part",ch+1,"of",nImageParts,"____");
+		run("Close All");	//backup in case something remained open by accident; avoids bugs
+		
+		// open chunk
+		t_begin = (chunkSize * ch) + 1;
+		t_end   = chunkSize * (ch + 1);
+		run("Bio-Formats Importer", "open=["+impath+"] t_begin="+t_begin+" t_end="+t_end+" t_step=1" +
+					" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
+		// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
+
+		if (nImageParts > 1)	rename(outname_base + "_" + IJ.pad(t_begin,4) + "-" + IJ.pad(t_end,4));
 		ori = getTitle();
 		getPixelSize(pix_unit, pixelWidth, pixelHeight);
 		Stack.getDimensions(width, height, channels, slices, frames);
 
-		// make projection & crop
+		// make projection
 		print("making projection");
 		run("Z Project...", "projection=[Max Intensity] all");
+		rename("PRJ"+getTitle());
 		prj = getTitle();
 		if (intermediate_times)	before = printTime(before);
 
-		// crop around signal and save projection
-		print("first crop around signal");
-		findSignalSpace(crop_boundary);
-		run("Duplicate...", "duplicate title=PRJ");
-		roiManager("select", 0);
-		run("Crop");
-		crop = getTitle();
-		if (intermediate_times)	before = printTime(before);
+		// find B&C (on first chunk, then maintain)
+		if (ch == 0){
+			print("find brightness & contrast settings");
+			setBC();
+			getMinAndMax(minBrightness, maxBrightness);
+			if (intermediate_times)	before = printTime(before);
+		}
 		
-		// find B&C
-		print("find brightness & contrast settings");
-		setBC();
-		getMinAndMax(minBrightness, maxBrightness);
-		if (intermediate_times)	before = printTime(before);
-		
-		// create registration file for drift correction
-		print("create registration file");
-		run("Tile");
-		selectImage(crop);
-		setSlice(nSlices/2);
-		TransMatrix_File = regdir + im_name + "_TrMatrix.txt";
-		run("MultiStackReg", "stack_1="+crop+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
-		run(prj_LUT);
-		if (intermediate_times)	before = printTime(before);
-
 		// create depth coded image
 		print("create depth-coded movie");
-		dumpMemory(3);
+		if (nImageParts == 1){
+			// ######## add crop function here to speed up depth coding
+			_ = 1;	// placeholder
+		}
 		selectImage(ori);
 		depthCoding();
 		dep_im = getTitle();
 		if (intermediate_times)	before = printTime(before);
-		
-		// correct drift on depth coded image
-		print("correct drift on depth code");
-		correctDriftRGB(dep_im);
-		dep_reg = getTitle();
-		if (intermediate_times)	before = printTime(before);
 
-		// find final crop
-		print("output intermediates");
-		selectImage(dep_reg);
-		findSignalSpace(crop_boundary);
-
-		// prep and save separate projections
-		outputArray = newArray(crop, dep_reg);
-		for (x = 0; x < outputArray.length; x++) {
-			selectImage(outputArray[x]);
-			// crop image
-			roiManager("select", 0);
-			run("Crop");
-			run("Remove Overlay");	// fix for overlay box in RGB
-			run("Select None");
-
-			// create scale bar and time stamp
-			scalebarsize = findScalebarSize();
-			run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
-			timeStamper();
-
-			saveAs("Tiff", outdir + outname_base + "_" + getTitle());
-			rename(outputArray[x]);	// fixes renaming after saving
+		// save intermediates
+		outputArray = newArray(prj,dep_im);
+		for (i = 0; i < outputArray.length; i++) {
+			selectImage(outputArray[i]);
+			saveAs("Tiff", outdir + getTitle());
+			close();
 		}
-		if (intermediate_times)	before = printTime(before);
-
-		// create and save final movie
-		print("create final movie");
-		fuseImages();
-		savename = outdir + outname_base + "_OrgaMovie";
-		saveAs("Tiff", savename);
-		run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename + ".avi]");
-		roiManager("reset");
-		if (intermediate_times)	before = printTime(before);
-
+		close(ori);
 	}
+	
+	// Now assemble separate parts, register and make OrgaMovie
+	print("____ opening max projection of all parts ____");
+	run("Image Sequence...", "select="+outdir+" dir="+outdir+" type=16-bit filter=PRJMAX_ sort");
+	rename("PRJ");
+	prj_concat = getTitle();
+	deleteIntermediates("PRJMAX", outdir);
+	if (intermediate_times)	before = printTime(before);
+
+	// crop around signal and save projection
+	print("first crop and registration");
+	findSignalSpace(crop_boundary);
+	roiManager("select", roiManager("count")-1);
+	run("Crop");
+	
+	// create registration file for drift correction
+	print("create registration file");
+	selectImage(prj_concat);
+	setSlice(nSlices/2);
+	TransMatrix_File = outdir + outname_base + "_TrMatrix.txt";
+	run("MultiStackReg", "stack_1="+prj_concat+" action_1=Align file_1=["+TransMatrix_File+"] stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
+	run(prj_LUT);
+	if (intermediate_times)	before = printTime(before);
+
+
+	// open MAX and COLOR- projections
+	print("opening color projection of all parts");
+	run("Image Sequence...", "select="+outdir+" type=RGB dir="+outdir+" filter=PRJCOL_ sort");
+	rename("PRJCOL_" + outname_base);
+	rgb_concat = getTitle();
+	deleteIntermediates("PRJCOL", outdir);
+	if (intermediate_times)	before = printTime(before);
+
+	// correct drift on depth coded image
+	print("correct drift on depth code");
+	roiManager("select", roiManager("count")-1);
+	run("Crop");
+	
+	correctDriftRGB(rgb_concat);
+	dep_reg = getTitle();
+	if (intermediate_times)	before = printTime(before);
+
+	// find final crop
+	print("output intermediates");
+	selectImage(prj_concat);
+	findSignalSpace(crop_boundary);
+
+
+	// prep and save separate projections
+	outputArray = newArray(prj_concat, dep_reg);
+	for (x = 0; x < outputArray.length; x++) {
+		selectImage(outputArray[x]);
+		// crop image
+		roiManager("select", roiManager("count")-1);
+		run("Crop");
+		run("Remove Overlay");	// fix for overlay box in RGB (obsolete?)
+		run("Select None");
+
+		saveAs("Tiff", outdir + outname_base + "_" + getTitle());
+		rename(outputArray[x]);	// fixes renaming after saving
+
+		// create scale bar and time stamp
+		scalebarsize = findScalebarSize();
+		run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
+		timeStamper();
+	}
+	if (intermediate_times)	before = printTime(before);
+
+	// create and save final movie
+	print("assemble into OrgaMovie");
+	fuseImages();
+	savename = outdir + outname_base + "_OrgaMovie";
+	saveAs("Tiff", savename);
+	run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename + ".avi]");
+	roiManager("reset");
+	if (intermediate_times)	before = printTime(before);
+
+	printDateTime("Finished processing "+im_name);
 	time = round((getTime() - start)/1000);
-	print("image took",time,"seconds to process");
+	timeformat = d2s(floor(time/60),0) + ":" + IJ.pad(time%60,2);
+	if (intermediate_times)		print("    image took",timeformat,"min to process");
 	run("Close All");
 
+	File.delete(TransMatrix_File);
+	print("\\Update:____________________________");
+	selectWindow("Log");
+	saveAs("Text", outdir + "Log.txt");
 }
 //run("Tile");
 for (q = 0; q < 3; q++) 	run("Collect Garbage"); // clear memory
@@ -207,30 +282,67 @@ print("macro end");
 		// TIFF split (separate smaller files, can be stored in 8bit grayscale to save MBs, then can add separate package to compile each part in LUT of choice)
 
 
-function openFileAndDoChecks(path){
+function fileChunks(path){
 	print_statement = "check and open file: " + path;
-	print(print_statement);
+	printDateTime(print_statement);
 	filesize = getFileSize(path);
+
+	nImageParts = Math.ceil(filesize/filesize_limit);
+
+	run("Bio-Formats Importer", "open=["+path+"] display_metadata view=[Metadata only]");
+	T = getInfo("window.title");
+	MD = getInfo("window.contents");
+	lines = split(MD,"\n");
 	
+	line9 = split(lines[9],"\t");
+	sizeT = parseInt(line9[1]);
+	chunkSize = Math.ceil(sizeT/nImageParts);
+	nImageParts = Math.ceil(sizeT/chunkSize);
+
+	close(T);
+	
+	return newArray(nImageParts,sizeT,chunkSize);
+	
+	
+	// everything below return statement is ignored/obsolete
+
 	if (filesize > filesize_limit) {
 		print("FILE TOO LARGE TO PROCESS");
 		print("   file size above size limit of",filesize_limit,"GB");
 		print("   consider splitting image or increasing limit");
 		print("   this file will be skipped");
 	}
-	
+
 	else{
-		// opening as non-virtual seems to improve processing speed by ~20%
-		// but virtual allows for processing larger images --> this might be voided by crash in downstream processing
-		//run("Bio-Formats Importer", "open=[&path] use_virtual_stack");
-		//run("Grays");
-		run("Bio-Formats Importer", "open=[&path] autoscale color_mode=Grayscale");	
+		run("Bio-Formats Importer", "open=["+path+"] autoscale color_mode=Grayscale");	
 		if (!checkHyperstack())	close();
 	}
-	
 }
 
+function getFileSize(path){
 
+	// python code to print filesize to log (can't find how to do this from IJ)
+	endex = "||";
+	py= "path = r'" + path + "'\n" +
+		"import os" + "\n" + 
+		"size = os.path.getsize(path)" + "\n" +
+		"from ij.IJ import log" + "\n" +
+		"log(str(size) + '"+endex+"')";
+	eval ("python",py);
+
+	// read filesize from logwindow
+	L = getInfo("log");
+	index1 = indexOf(L, print_statement) + lengthOf(print_statement);
+	index2 = indexOf(L, endex);
+	size = substring(L,index1,index2);
+
+	// convert to GB
+	G = 1073741824;	// bytes in GB
+	size = parseInt(size)/G;
+	print("\\Update:  "+round(size*100)/100 + " GB");
+
+	return size;
+}
 
 function checkHyperstack(){
 	
@@ -271,7 +383,7 @@ function setBC(){
 	
 	// get max brightness setting based on percentile of overexposed pixels
 	//maxT = getPercentile(overexp_percile);
-	run("Enhance Contrast", "saturated=&saturate");
+	run("Enhance Contrast", "saturated="+saturate);
 	getMinAndMax(_, maxT);
 
 	// set min and max according to rules above
@@ -280,15 +392,6 @@ function setBC(){
 }
 
 
-
-
-
-function getTransformationMatrix(){
-	//%% make transformation matrix file
-	im = getTitle();
-	// register and save matrix
-	run("MultiStackReg", "stack_1="+cropped+" action_1=Align file_1="+TransMatrix_File+" stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
-}
 
 function correctDriftRGB(im){
 	// %% use transformatin matrix to correct drift
@@ -347,31 +450,6 @@ function createDepthLegend(nBands, W, H){
 	
 }
 
-function getFileSize(path){
-
-	// python code to print filesize to log (can't find how to do this from IJ)
-	endex = "||";
-	py= "path = r'" + path + "'\n" +
-		"import os" + "\n" + 
-		"size = os.path.getsize(path)" + "\n" +
-		"from ij.IJ import log" + "\n" +
-		"log(str(size) + '"+endex+"')";
-	eval ("python",py);
-
-	// read filesize from logwindow
-	L = getInfo("log");
-	index1 = indexOf(L, print_statement) + lengthOf(print_statement);
-	index2 = indexOf(L, endex);
-	size = substring(L,index1,index2);
-
-	// convert to GB
-	G = 1073741824;	// bytes in GB
-	size = parseInt(size)/G;
-	print("\\Update:  "+round(size*100)/100 + " GB");
-
-	return size
-}
-
 
 function findSignalSpace(boundary){
 	im = getTitle();
@@ -381,7 +459,7 @@ function findSignalSpace(boundary){
 	if (bitDepth() == 24)	run("8-bit");
 	
 	// find crop outline
-	setAutoThreshold("MinError dark");
+	setAutoThreshold(crop_threshold + " dark");
 	setOption("BlackBackground", false);
 	run("Convert to Mask");
 	run("Erode");
@@ -411,16 +489,22 @@ function findSignalSpace(boundary){
 }
 
 function depthCoding(){
-	// crop according to previously found size
-	roiManager("select", 0);
-	run("Duplicate...", "title=hyperstack_region duplicate");
-	hstack_crop = getTitle();
 
-	// swap frames and slices 
+	// prep image (swap frames/slices -> 8-bit -> set B&C
 	run("Re-order Hyperstack ...", "channels=[Channels (c)] slices=[Frames (t)] frames=[Slices (z)]");
 	setMinAndMax(minBrightness, maxBrightness);
-	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices);
-	depim = getTitle();
+	wait(500);	// avoids a crash
+	run("8-bit");
+	run("Grays");
+	dumpMemory(1);
+	
+
+	// run color coding
+	precolorname = getTitle();
+	if (run_in_background)	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices+" batch");
+	else					run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices);
+	rename("PRJCOL_" + precolorname);
+	dumpMemory(3);
 
 	// reset dimensions
 	Stack.setXUnit(pix_unit);
@@ -502,7 +586,7 @@ function makeHeaderImage(title, type){
 	setColor(255,255,255);
 
 	// create header image
-	newImage(title, "RGB black", im_width, header_height, frames);
+	newImage(title, "RGB black", im_width, header_height, sizeT);
 	head = getTitle();
 	Stack.setXUnit(pix_unit);
 	run("Properties...", "pixel_width="+pixelWidth+" pixel_height="+pixelHeight);
@@ -525,7 +609,7 @@ function makeHeaderImage(title, type){
 
 function fuseImages(){
 	// apply LUT to normal projection
-	selectImage(crop);
+	selectImage(prj_concat);
 	run(prj_LUT);
 	setMinAndMax(minBrightness, maxBrightness);
 	run("RGB Color");
@@ -540,7 +624,7 @@ function fuseImages(){
 	rename("HEAD2");
 	
 	// combine images
-	run("Combine...", "stack1=" + dep_reg + " stack2=" + crop);	// main movies
+	run("Combine...", "stack1=" + dep_reg + " stack2=" + prj_concat);	// main movies
 	rename("MAIN");
 	run("Combine...", "stack1=HEAD1 stack2=HEAD2"); // headers
 	rename("HEADS");
@@ -550,6 +634,21 @@ function fuseImages(){
 		setSlice(n+1);
 		setColor(128,128,128);
 		drawLine(getWidth()/2, 0, getWidth()/2, getHeight());
+	}
+}
+
+function deleteIntermediates(filestart, directory){
+	L = getFileList(directory);
+	for (i = 0; i < L.length; i++) {
+		if (startsWith(L[i], filestart)){
+			File.delete(directory + L[i]);
+
+			// this prints a 1, which I want to get rid of...
+			Log = getInfo("log");
+			Log = substring(Log, 0, lengthOf(Log)-3);
+			print("\\Clear");
+			print(Log);
+		}
 	}
 }
 
@@ -565,6 +664,24 @@ function timeStamper(){
 	run("Colors...", "foreground=white");
 	run("Time Stamper", "starting=0 interval="+T_step+" x="+x_pos+" y="+getHeight-2+" font="+fontsize+" '00 decimal=0 anti-aliased or=_");
 }
+
+
+function printDateTime(suffix){
+	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+
+	yr = substring (d2s(year,0),2);
+	mth = IJ.pad(month+1,2);
+	day = IJ.pad(dayOfMonth,2);
+	date = yr + mth + day;
+
+	h 	= IJ.pad(hour,2);
+	min = IJ.pad(minute,2);
+	sec = IJ.pad(second,2);
+	time = h + ":" + min + ":" + sec;
+
+	print(date, time, "-", suffix);
+}
+
 
 function dumpMemory(n){
 	for (i = 0; i < n; i++) 	run("Collect Garbage");
