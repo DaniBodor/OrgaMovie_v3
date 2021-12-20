@@ -1,11 +1,6 @@
 
 requires("1.53f");	// for Array.filter()
 
-print("\\Clear");
-run("Close All");
-roiManager("reset");
-dumpMemory(3);
-
 // input/output settings
 input_filetype = "tif";
 filesize_limit = 0.2; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
@@ -57,7 +52,7 @@ print("\\Clear");
 run("Close All");
 roiManager("reset");
 roiManager("Show None");
-setBatchMode(run_in_background);	// batch mode seemns to auto-deactivate when color projection appears
+setBatchMode(run_in_background);	// bug, see above
 dumpMemory(3);
 
 // find all images in base directory
