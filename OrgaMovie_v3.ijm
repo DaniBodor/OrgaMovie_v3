@@ -41,7 +41,6 @@ run_in_background = false;	//apparently buggy; don't understand why. see issues 
 print("\\Clear");
 run("Close All");
 roiManager("reset");
-roiManager("Show None");
 setBatchMode(run_in_background);	// bug, see above
 dumpMemory(3);
 
@@ -64,6 +63,7 @@ else	{
 
 
 printDateTime("running OrgaMovie macro on: "+ dir);
+print("");
 
 // run on all images
 for (im = 0; im < im_list.length; im++) {
@@ -229,7 +229,7 @@ for (im = 0; im < im_list.length; im++) {
 for (q = 0; q < 3; q++) 	run("Collect Garbage"); // clear memory
 print("----");
 print("----");
-print("macro end");
+printDateTime("run finished");
 
 
 
@@ -456,6 +456,7 @@ function findSignalSpace(boundary){
 	selectImage(im);
 	makeRectangle(x-boundary, y-boundary, width+2*boundary, height+2*boundary);
 	roiManager("add");
+	roiManager("Show None");
 	run("Select None");
 }
 
