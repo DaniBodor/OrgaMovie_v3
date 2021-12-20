@@ -1,9 +1,12 @@
 
 requires("1.53f");	// for Array.filter()
 
+
 // input/output settings
 input_filetype = "tif";
-filesize_limit = 0.2; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
+IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
+chunkSizeLimit = IJmem/4;	// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
+//chunkSizeLimit = 0.2; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
 outdirname = "_OrgaMovies";
 Z_step = 2.5;		// microns (can this be read from metadata?)
 T_step = 3;			// min (can this be read from metadata?)
@@ -32,7 +35,7 @@ scalebarProportion = 0.2; // proportion of image width best matching scale bar w
 
 // progress display settings
 intermediate_times = true;
-run_in_background = false;	//apparently buggy; don't understand why. see issues for info on bug
+run_in_background = false;	//apparently buggy; don't understand why. see github issues for info on bug
 
 
 ////////////////////////////////////////////// START MACRO //////////////////////////////
@@ -48,6 +51,9 @@ dumpMemory(3);
 dir = getDirectory("Choose directory with images to process");
 list = getFileList(dir);
 im_list = Array.filter(list,"."+input_filetype);
+printDateTime("running OrgaMovie macro on: "+ dir);
+print("size limit for 16-bit images is", round(chunkSizeLimit*10)/10, "GB");
+print("");
 
 // prep output folders
 outdir = dir + outdirname + File.separator;
@@ -62,10 +68,7 @@ else	{
 
 
 
-printDateTime("running OrgaMovie macro on: "+ dir);
-print("");
-
-// run on all images
+// start running on all images
 for (im = 0; im < im_list.length; im++) {
 
 	// image preliminaries
@@ -77,7 +80,7 @@ for (im = 0; im < im_list.length; im++) {
 	impath = dir + im_name;
 	outname_base = File.getNameWithoutExtension(im_name);
 	
-	// read how many parts image needs to be opened in based on filesize_limit
+	// read how many parts image needs to be opened in based on chunkSizeLimit
 	chunksArray = fileChunks(impath); // returns: newArray(nImageParts,sizeT,chunkSize);
 	nImageParts = chunksArray[0];
 	sizeT		= chunksArray[1];
@@ -270,24 +273,35 @@ printDateTime("run finished");
 function fileChunks(path){
 	print_statement = "check and open file: " + path;
 	printDateTime(print_statement);
+
+	// get file size
 	filesize = getFileSize(path);
 
-	nImageParts = Math.ceil(filesize/filesize_limit);
-
+	// read metadata
 	run("Bio-Formats Importer", "open=["+path+"] display_metadata view=[Metadata only]");
-	T = getInfo("window.title");
+	MD_window = getInfo("window.title");
 	MD = getInfo("window.contents");
-	lines = split(MD,"\n");
-	
-	line9 = split(lines[9],"\t");
-	sizeT = parseInt(line9[1]);
-	chunkSize = Math.ceil(sizeT/nImageParts);
-	nImageParts = Math.ceil(sizeT/chunkSize);
+	MD_lines = split(MD,"\n");	// metadata as array of separate lines (index 0 is header)
+	close(MD_window);
 
-	close(T);
-	
-	return newArray(nImageParts,sizeT,chunkSize);
+	// find image bitdepth
+	bitsPerPix = split(MD_lines[1],"\t");	// metadata line 1 contains bitdepth
+	bitsPerPix = bitsPerPix[1];			// index 0 is key, index 1 is value
+	if (bitsPerPix == 8){
+		true_chunkSizeLimit = chunkSizeLimit/1.5;	// 8-bit images do not get compressed before opening
+		print("image is 8-bit; size limit adjusted to", round(true_chunkSizeLimit*10)/10, "GB");
+	}
+	else true_chunkSizeLimit = chunkSizeLimit;
 
+	// calculate how many chunks it needs to be opened in
+	nImageParts_max = Math.ceil(filesize/true_chunkSizeLimit);	// nImageparts based on size limit
+	line9 = split(MD_lines[9],"\t"); // metadata line 9 contains contains info on number of time steps
+	sizeT = parseInt(line9[1]);		 // index 0 is key, index 1 is value
+	chunkSize = Math.ceil(sizeT/nImageParts_max); // calculate number of time steps per chunk
+	nImageParts_true = Math.ceil(sizeT/chunkSize); // corrects nImageParts because some chunks could contain 0 frames
+	
+	// return file chunk parameters
+	return newArray(nImageParts_true,sizeT,chunkSize);
 }
 
 function getFileSize(path){
