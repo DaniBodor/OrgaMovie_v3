@@ -3,7 +3,7 @@ requires("1.53f");	// for Array.filter()
 
 
 // input/output settings
-input_filetype = "tif";
+input_filetype = "nd2";
 IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
 chunkSizeLimit = IJmem/4;	// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
 //chunkSizeLimit = 0.2; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
@@ -51,9 +51,6 @@ dumpMemory(3);
 dir = getDirectory("Choose directory with images to process");
 list = getFileList(dir);
 im_list = Array.filter(list,"."+input_filetype);
-printDateTime("running OrgaMovie macro on: "+ dir);
-print("size limit for 16-bit images is", round(chunkSizeLimit*10)/10, "GB");
-print("");
 
 // prep output folders
 outdir = dir + outdirname + File.separator;
@@ -68,7 +65,12 @@ else	{
 
 
 
+
 // start running on all images
+printDateTime("running OrgaMovie macro on: "+ dir);
+print("size limit for 16-bit images is", round(chunkSizeLimit*10)/10, "GB");
+print("");
+
 for (im = 0; im < im_list.length; im++) {
 
 	// image preliminaries
