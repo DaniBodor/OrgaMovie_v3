@@ -98,6 +98,7 @@ for (im = 0; im < im_list.length; im++) {
 		// open chunk
 		t_begin = (chunkSize * ch) + 1;
 		t_end   = chunkSize * (ch + 1);
+		print("opening file");
 		run("Bio-Formats Importer", "open=["+impath+"] t_begin="+t_begin+" t_end="+t_end+" t_step=1" +
 					" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
 		// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
@@ -106,21 +107,21 @@ for (im = 0; im < im_list.length; im++) {
 		ori = getTitle();
 		getPixelSize(pix_unit, pixelWidth, pixelHeight);
 		Stack.getDimensions(width, height, channels, slices, frames);
+		if (intermediate_times)	before = printTime(before);
 
 		// make projection
 		print("making projection");
 		run("Z Project...", "projection=[Max Intensity] all");
 		rename("PRJ"+getTitle());
 		prj = getTitle();
-		if (intermediate_times)	before = printTime(before);
 
 		// find B&C (on first chunk, then maintain)
 		if (ch == 0){
 			print("find brightness & contrast settings");
 			setBC();
 			getMinAndMax(minBrightness, maxBrightness);
-			if (intermediate_times)	before = printTime(before);
 		}
+		if (intermediate_times)	before = printTime(before);
 		
 		// create depth coded image
 		print("create depth-coded movie");
