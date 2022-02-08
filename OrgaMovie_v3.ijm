@@ -1,41 +1,98 @@
 
 requires("1.53f");	// for Array.filter()
 
+colw = 4;
+title_fontsize = 15;
+github = "https://github.com/DaniBodor/OrgaMovie_v3";
 
-// input/output settings
-input_filetype = "nd2";
-IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
-chunkSizeLimit = IJmem/4;	// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
-//chunkSizeLimit = 0.2; // max filesize (in GB) --> make this a ratio of the max allocated memory to IJ
+Dialog.create("OrgaMovie Settings");
+	Dialog.addHelp(github);
+	
+	Dialog.setInsets(10, 0, 0);
+	Dialog.addMessage("Input settings",title_fontsize);
+	Dialog.setInsets(0, 0, -2);
+	Dialog.addString("Input filetype", "nd2", colw-2);
+	Dialog.addNumber("Input channel", 1, 0, colw, "");
+	Dialog.addNumber("Time interval", 3, 0, colw, "min");
+	Dialog.addNumber("Z-step", 2.5, 1, colw, getInfo("micrometer.abbreviation"));
+
+	Dialog.setInsets(20, 0, 0);
+	Dialog.addMessage("\nMovie settings",title_fontsize);
+	Dialog.setInsets(0, 0, 0);
+	Dialog.addNumber("Frame rate", 18, 0, colw, "frames / sec");
+	Dialog.setInsets(2, 40, -2);
+	Dialog.addCheckbox("Apply drift correction", 1);
+	LUTlist = getList("LUTs");
+	Dialog.addChoice("Depth coding", LUTlist, "Depth Organoid");
+	Dialog.addChoice("Projection LUT", LUTlist, "The Real Glow");
+	Dialog.addNumber("Pixel saturation", 0.1, 2, colw, "%");
+	thresh_methods = getList("threshold.methods");
+	Dialog.addChoice("Min intensity method", thresh_methods, "Percentile");
+	Dialog.addNumber("Min intensity factor", 1, 1, colw, "");
+	Dialog.addChoice("Detect crop region", thresh_methods, "MinError");
+	Dialog.addNumber("Crop boundary", 24, 0, colw, "pixels");
+	Dialog.addNumber("Scalebar target width", 20, 0, colw, "% of total width");
+
+	Dialog.setInsets(20, 0, 0);
+	Dialog.addMessage("Output settings",title_fontsize);
+	Dialog.setInsets(0, 0, -2);
+	output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
+	Dialog.addChoice("Output format", output_options, output_options[0]);
+	Dialog.setInsets(0, 40, 0);
+	Dialog.addCheckbox("Save intermediates", 1);
+
+	Dialog.setInsets(20, 0, 0);
+	Dialog.addMessage("ImageJ settings",title_fontsize);
+	Dialog.setInsets(0, 0, -2);
+	Dialog.addNumber("Available RAM", 0, 0, colw, "GB (use 0 to auto-detect)");
+	Dialog.setInsets(0, 40, 0);
+	Dialog.addCheckbox("Print progress duration", 1);
+	//Dialog.setInsets(0, 40, 0);
+	//Dialog.addCheckbox("Run in background (doesn't work yet)", 0);
+
+Dialog.show();
+	// retrieve info from dialog window
+	
+	// input settings
+	input_filetype 	= Dialog.getString();
+	input_channel 	= Dialog.getNumber();
+	T_step 			= Dialog.getNumber();
+	Z_step 			= Dialog.getNumber();
+	
+	//movie settings
+	framerate 		= Dialog.getNumber();
+	do_registration	= Dialog.getCheckbox();
+	depth_LUT 		= Dialog.getChoice();
+	prj_LUT  		= Dialog.getChoice();
+	saturate 		= Dialog.getNumber();
+	min_thresh_meth	= Dialog.getChoice();
+	minBrightFactor	= Dialog.getNumber();
+	crop_threshold	= Dialog.getChoice();
+	crop_boundary	= Dialog.getNumber();
+	scalebartarget	= Dialog.getNumber()/100;	// proportion of image width best matching scale bar width
+
+	//output settings
+	out_format		= Dialog.getChoice();
+	save_intermed	= Dialog.getCheckbox();
+
+	//imagej settings
+	chunkSizeLimit	= Dialog.getNumber();
+	IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
+	if (chunkSizeLimit == 0) chunkSizeLimit = IJmem/4;	// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
+	intermed_times	= Dialog.getCheckbox();
+	run_in_bg = false;	//apparently buggy; don't understand why. see github issues for info on bug
+
+
+// SETTINGS NOT IN DIALOG
 outdirname = "_OrgaMovies";
-Z_step = 2.5;		// microns (can this be read from metadata?)
-T_step = 3;			// min (can this be read from metadata?)
-framerate = 18;		//fps
 
-// visual settings
-minBrightnessFactor	= 1;
-min_thresh_meth		= "Percentile";
-overexp_percile = 0.1;	// unused
-saturate = 0.01;	// saturation value used for contrasting
-crop_threshold = "MinError";
-crop_boundary = 24;	// pixels
-
-// header settings
+// header & scalebar
 header_height = 48; // pixel height of header
 fontsize = round(header_height/3);
 header_pixoffset = 4;
-depth_LUT = "Depth Organoid";
-prj_LUT = "The Real Glow";
 setFont("SansSerif", fontsize, "antialiased");
-
-// scalebar settings
 scalebar_size = 25;	// microns (unused)
 scalebarOptions = newArray(1, 2, 5, 7.5, 10, 15, 20, 25, 40, 50, 60, 75, 100, 125, 150, 200, 250, 500, 750, 1000, 1500, 2000); /// in microns
-scalebarProportion = 0.2; // proportion of image width best matching scale bar width
-
-// progress display settings
-intermediate_times = true;
-run_in_background = false;	//apparently buggy; don't understand why. see github issues for info on bug
 
 
 ////////////////////////////////////////////// START MACRO //////////////////////////////
@@ -44,7 +101,7 @@ run_in_background = false;	//apparently buggy; don't understand why. see github 
 print("\\Clear");
 run("Close All");
 roiManager("reset");
-setBatchMode(run_in_background);	// bug, see above
+setBatchMode(run_in_bg);	// bug, see above
 dumpMemory(3);
 
 // find all images in base directory
@@ -58,7 +115,7 @@ if (im_list.length > 0) File.makeDirectory(outdir);
 else	{
 	printDateTime("");
 	print("***MACRO ABORTED***");
-	print("no files containing:",input_filetype);
+	print("no files with extension:",input_filetype);
 	print("were found in: "+dir);
 	exit(getInfo("log"));
 }
@@ -76,7 +133,7 @@ for (im = 0; im < im_list.length; im++) {
 	// image preliminaries
 	dumpMemory(3);
 	start = getTime();
-	if (intermediate_times)	before = start;
+	if (intermed_times)	before = start;
 	
 	im_name = im_list[im];
 	impath = dir + im_name;
@@ -107,7 +164,7 @@ for (im = 0; im < im_list.length; im++) {
 		ori = getTitle();
 		getPixelSize(pix_unit, pixelWidth, pixelHeight);
 		Stack.getDimensions(width, height, channels, slices, frames);
-		if (intermediate_times)	before = printTime(before);
+		if (intermed_times)	before = printTime(before);
 
 		// make projection
 		print("making projection");
@@ -121,7 +178,7 @@ for (im = 0; im < im_list.length; im++) {
 			setBC();
 			getMinAndMax(minBrightness, maxBrightness);
 		}
-		if (intermediate_times)	before = printTime(before);
+		if (intermed_times)	before = printTime(before);
 		
 		// create depth coded image
 		print("create depth-coded movie");
@@ -132,7 +189,7 @@ for (im = 0; im < im_list.length; im++) {
 		selectImage(ori);
 		depthCoding();
 		dep_im = getTitle();
-		if (intermediate_times)	before = printTime(before);
+		if (intermed_times)	before = printTime(before);
 
 		// save intermediates
 		outputArray = newArray(prj,dep_im);
@@ -146,11 +203,11 @@ for (im = 0; im < im_list.length; im++) {
 	
 	// Now assemble separate parts, register and make OrgaMovie
 	print("____ opening max projection of all parts ____");
-	run("Image Sequence...", "select="+outdir+" dir="+outdir+" type=16-bit filter=PRJMAX_ sort");
+	run("Image Sequence...", "select=["+outdir+"] dir=["+outdir+"] type=16-bit filter=PRJMAX_ sort");
 	rename("PRJ");
 	prj_concat = getTitle();
 	deleteIntermediates("PRJMAX", outdir);
-	if (intermediate_times)	before = printTime(before);
+	if (intermed_times)	before = printTime(before);
 
 	// crop around signal and save projection
 	print("first crop and registration");
@@ -165,16 +222,16 @@ for (im = 0; im < im_list.length; im++) {
 	TransMatrix_File = outdir + outname_base + "_TrMatrix.txt";
 	run("MultiStackReg", "stack_1="+prj_concat+" action_1=Align file_1=["+TransMatrix_File+"] stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
 	run(prj_LUT);
-	if (intermediate_times)	before = printTime(before);
+	if (intermed_times)	before = printTime(before);
 
 
 	// open MAX and COLOR- projections
 	print("opening color projection of all parts");
-	run("Image Sequence...", "select="+outdir+" type=RGB dir="+outdir+" filter=PRJCOL_ sort");
+	run("Image Sequence...", "select=["+outdir+"] type=RGB dir=["+outdir+"] filter=PRJCOL_ sort");
 	rename("PRJCOL_" + outname_base);
 	rgb_concat = getTitle();
 	deleteIntermediates("PRJCOL", outdir);
-	if (intermediate_times)	before = printTime(before);
+	if (intermed_times)	before = printTime(before);
 
 	// correct drift on depth coded image
 	print("correct drift on depth code");
@@ -183,7 +240,7 @@ for (im = 0; im < im_list.length; im++) {
 	
 	correctDriftRGB(rgb_concat);
 	dep_reg = getTitle();
-	if (intermediate_times)	before = printTime(before);
+	if (intermed_times)	before = printTime(before);
 
 	// find final crop
 	print("output intermediates");
@@ -209,7 +266,7 @@ for (im = 0; im < im_list.length; im++) {
 		run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
 		timeStamper();
 	}
-	if (intermediate_times)	before = printTime(before);
+	if (intermed_times)	before = printTime(before);
 
 	// create and save final movie
 	print("assemble into OrgaMovie");
@@ -218,12 +275,12 @@ for (im = 0; im < im_list.length; im++) {
 	saveAs("Tiff", savename);
 	run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename + ".avi]");
 	roiManager("reset");
-	if (intermediate_times)	before = printTime(before);
+	if (intermed_times)	before = printTime(before);
 
 	printDateTime("Finished processing "+im_name);
 	time = round((getTime() - start)/1000);
 	timeformat = d2s(floor(time/60),0) + ":" + IJ.pad(time%60,2);
-	if (intermediate_times)		print("    image took",timeformat,"min to process");
+	if (intermed_times)		print("    image took",timeformat,"min to process");
 	run("Close All");
 
 	File.delete(TransMatrix_File);
@@ -232,7 +289,7 @@ for (im = 0; im < im_list.length; im++) {
 	saveAs("Text", outdir + "Log.txt");
 }
 //run("Tile");
-for (q = 0; q < 3; q++) 	run("Collect Garbage"); // clear memory
+dumpMemory(3); // clear memory
 print("----");
 print("----");
 printDateTime("run finished");
@@ -367,7 +424,7 @@ function setBC(){
 	// get min brightness setting of threshold method
 	setAutoThreshold(min_thresh_meth);
 	getThreshold(_,minT);
-	minT = minT * minBrightnessFactor;
+	minT = minT * minBrightFactor;
 	
 	// get max brightness setting based on percentile of overexposed pixels
 	//maxT = getPercentile(overexp_percile);
@@ -490,7 +547,7 @@ function depthCoding(){
 
 	// run color coding
 	precolorname = getTitle();
-	if (run_in_background)	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices+" batch");
+	if (run_in_bg)	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices+" batch");
 	else					run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices);
 	rename("PRJCOL_" + precolorname);
 	dumpMemory(3);
@@ -504,7 +561,7 @@ function depthCoding(){
 function findScalebarSize(){
 	// get ideal width for scale bar
 	fullW = getWidth() * pixelWidth;
-	idealW = fullW * scalebarProportion;
+	idealW = fullW * scalebartarget;
 
 	// initialize in case full width is smaller than all options 
 		// (unlikely, but don't want any chance of a crash)
@@ -679,3 +736,5 @@ function printDateTime(suffix){
 function dumpMemory(n){
 	for (i = 0; i < n; i++) 	run("Collect Garbage");
 }
+
+
