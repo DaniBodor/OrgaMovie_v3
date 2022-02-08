@@ -31,7 +31,7 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 
 
 ## OrgaMovie Settings
-<img align="left" src="https://user-images.githubusercontent.com/14219087/153049632-3072f0de-d0ee-455d-98e5-f76747955bef.png" width=30%>
+<img align="right" src="https://user-images.githubusercontent.com/14219087/153049632-3072f0de-d0ee-455d-98e5-f76747955bef.png" width=30%>
 
 ### Input settings
 - Input filetype: write the extension of the filetype you want to use (so that all files i the input folder with a different extension are ignored).
