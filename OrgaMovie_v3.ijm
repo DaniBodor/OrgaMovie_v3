@@ -82,7 +82,6 @@ Dialog.show();
 	intermed_times	= Dialog.getCheckbox();
 	run_in_bg = false;	//apparently buggy; don't understand why. see github issues for info on bug
 
-
 // SETTINGS NOT IN DIALOG
 outdirname = "_OrgaMovies";
 
@@ -125,7 +124,9 @@ else	{
 
 // start running on all images
 printDateTime("running OrgaMovie macro on: "+ dir);
+printSettings();
 print("size limit for 16-bit images is", round(chunkSizeLimit*10)/10, "GB");
+print("____________________________");
 print("");
 
 for (im = 0; im < im_list.length; im++) {
@@ -730,6 +731,29 @@ function printDateTime(suffix){
 	time = h + ":" + min + ":" + sec;
 
 	print(date, time, "-", suffix);
+}
+
+function printSettings(){
+	print("Settings from dialog");
+	print("   input_filetype:", input_filetype);
+	print("   input_channel:", input_channel);
+	print("   T_step:", T_step);
+	print("   Z_step:", Z_step);
+	print("   framerate:",framerate);
+	print("   do_registration:", do_registration);
+	print("   depth_LUT:",depth_LUT);
+	print("   prj_LUT:",prj_LUT);
+	print("   saturate:",saturate);
+	print("   min_thresh_meth:",min_thresh_meth);
+	print("   minBrightFactor:",minBrightFactor);
+	print("   crop_threshold:",crop_threshold);
+	print("   crop_boundary:",crop_boundary);
+	print("   scalebartarget:",scalebartarget);
+	print("   out_format:",out_format);
+	print("   save_intermed:",save_intermed);
+	print("   chunkSizeLimit:",chunkSizeLimit);
+	print("   intermed_times:",intermed_times);
+	print("   run_in_bg:", run_in_bg);
 }
 
 
