@@ -125,8 +125,8 @@ else	{
 // start running on all images
 printDateTime("running OrgaMovie macro on: "+ dir);
 printSettings();
-print("size limit for 16-bit images is", round(chunkSizeLimit*10)/10, "GB");
 print("____________________________");
+print("size limit for 16-bit images is", round(chunkSizeLimit*10)/10, "GB");
 print("");
 
 for (im = 0; im < im_list.length; im++) {
@@ -193,6 +193,7 @@ for (im = 0; im < im_list.length; im++) {
 		if (intermed_times)	before = printTime(before);
 
 		// save intermediates
+		print("saving chunk");
 		outputArray = newArray(prj,dep_im);
 		for (i = 0; i < outputArray.length; i++) {
 			selectImage(outputArray[i]);
@@ -200,6 +201,7 @@ for (im = 0; im < im_list.length; im++) {
 			close();
 		}
 		close(ori);
+		if (intermed_times)	before = printTime(before);
 	}
 	
 	// Now assemble separate parts, register and make OrgaMovie
