@@ -1,7 +1,7 @@
 
 requires("1.53f");	// for Array.filter()
 
-colw = 4;
+colw = 8;
 title_fontsize = 15;
 github = "https://github.com/DaniBodor/OrgaMovie_v3";
 
