@@ -12,13 +12,10 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 ## How to get the macro
 1) [Download](https://github.com/DaniBodor/OrgaMovie_v3/archive/refs/heads/main.zip) this repository by clicking on the link or on the green 'Code' button above and 'Download ZIP' (or use git pull).
 2) Extract your zip file
-3) Start FIJI and go to _Plugins>Install..._
-<img src="https://user-images.githubusercontent.com/14219087/153043733-e1f90753-01e7-4e4d-b06d-753f97aff7df.png" width=40%>
+3) Start FIJI and go to _Plugins>Install..._ &nbsp;&nbsp;&nbsp; <img align="middle" src="https://user-images.githubusercontent.com/14219087/153043733-e1f90753-01e7-4e4d-b06d-753f97aff7df.png" width=40%>
 
 4) Select OrgaMovie_v3.ijm from the location you downloaded and unzipped to and save it into you _.../fiji.app/plugins/Analyze/_ folder (or some other location you prefer)  
-5) Restart FiJi and it will show up in your _Plugins>Analyze_ menu
-
-<img src="https://user-images.githubusercontent.com/14219087/153043552-0d984d64-351b-4f12-bb03-4bdc5b87dfa5.png" width=50%>
+5) Restart FiJi and it will show up in your _Plugins>Analyze_ menu &nbsp;&nbsp;&nbsp; <img align="middle" src="https://user-images.githubusercontent.com/14219087/153043552-0d984d64-351b-4f12-bb03-4bdc5b87dfa5.png" width=50%>
 
 
 ## Running OrgaMovie_v3
