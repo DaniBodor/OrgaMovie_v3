@@ -344,14 +344,14 @@ function fileChunks(path){
 	else true_chunkSizeLimit = chunkSizeLimit;
 
 	// calculate how many chunks it needs to be opened in
-	nImageParts_max = Math.ceil(filesize/true_chunkSizeLimit);	// nImageparts based on size limit
-	
 	line8 = split(MD_lines[8],"\t"); // metadata line 8 contains contains info on number of channels
 	sizeC = parseInt(line8[1]);		 // index 0 is key, index 1 is value
 	
 	line9 = split(MD_lines[9],"\t"); // metadata line 9 contains contains info on number of time steps
 	sizeT = parseInt(line9[1]);		 // index 0 is key, index 1 is value
-	chunkSize = Math.ceil(sizeT/nImageParts_max/sizeC); // calculate number of time steps per chunk
+
+	nImageParts_max = Math.ceil(filesize/true_chunkSizeLimit/sizeC);	// nImageparts based on size limit
+	chunkSize = Math.ceil(sizeT/nImageParts_max); // calculate number of time steps per chunk
 	nImageParts_true = Math.ceil(sizeT/chunkSize); // corrects nImageParts because some chunks could contain 0 frames
 
 	// return file chunk parameters
