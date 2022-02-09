@@ -46,7 +46,7 @@ Dialog.create("OrgaMovie Settings");
 	Dialog.setInsets(0, 40, 0);
 	Dialog.addCheckbox("Reduce RAM usage", 0);
 	Dialog.setInsets(0, 40, 0);
-	Dialog.addCheckbox("Print progress duration", 1);
+	Dialog.addCheckbox("Print progress duration", 0);
 	//Dialog.setInsets(0, 40, 0);
 	//Dialog.addCheckbox("Run in background (doesn't work yet)", 0);
 
@@ -85,6 +85,8 @@ Dialog.show();
 
 // SETTINGS NOT IN DIALOG
 outdirname = "_OrgaMovies";
+tempname_col = "_TEMP_PRJCOL_";
+tempname_max = "_TEMP_PRJMAX_";
 
 // header & scalebar
 header_height = 48; // pixel height of header
@@ -173,7 +175,7 @@ for (im = 0; im < im_list.length; im++) {
 		// make projection
 		print("making projection");
 		run("Z Project...", "projection=[Max Intensity] all");
-		rename("PRJ"+getTitle());
+		rename(tempname_max+ori);
 		prj = getTitle();
 
 		// find B&C (on first chunk, then maintain)
@@ -186,10 +188,6 @@ for (im = 0; im < im_list.length; im++) {
 		
 		// create depth coded image
 		print("create depth-coded movie");
-		if (nImageParts == 1){
-			// ######## add crop function here to speed up depth coding
-			_ = 1;	// placeholder
-		}
 		selectImage(ori);
 		depthCoding();
 		dep_im = getTitle();
@@ -210,22 +208,22 @@ for (im = 0; im < im_list.length; im++) {
 	// Assemble individual sub-projections into nice movie
 	
 	// Open MAX projections
-	print("____ opening max projection of all parts ____");
-	run("Image Sequence...", "select=["+outdir+"] dir=["+outdir+"] type=16-bit filter=PRJMAX_ sort");
-	rename("PRJ");
+	print("re-opening all max projections");
+	run("Image Sequence...", "select=["+outdir+"] dir=["+outdir+"] type=16-bit filter="+tempname_max+" sort");
+	rename("PRJMAX");
 	prj_concat = getTitle();
-	deleteIntermediates("PRJMAX", outdir);
+	deleteIntermediates(tempname_max, outdir);
 	if (intermed_times)	before = printTime(before);
 
 	// crop around signal and save projection
-	print("first crop and registration");
+	print("  first crop and registration");
 	findSignalSpace(crop_boundary);
 	roiManager("select", roiManager("count")-1);
 	run("Crop");
 	
 	// create registration file for drift correction
 	if (do_registration){
-		print("create registration file");
+		print("  create registration file");
 		selectImage(prj_concat);
 		setSlice(nSlices/2);
 		TransMatrix_File = outdir + outname_base + "_TrMatrix.txt";
@@ -235,24 +233,24 @@ for (im = 0; im < im_list.length; im++) {
 	}
 
 	// open and crop COLOR projections
-	print("opening color projection of all parts");
-	run("Image Sequence...", "select=["+outdir+"] type=RGB dir=["+outdir+"] filter=PRJCOL_ sort");
-	rename("PRJCOL_" + outname_base);
+	print("re-opening all color projections");
+	run("Image Sequence...", "select=["+outdir+"] type=RGB dir=["+outdir+"] filter="+tempname_col+" sort");
+	rename("PRJCOL");
 	rgb_concat = getTitle();
 	roiManager("select", roiManager("count")-1);
 	run("Crop");
-	deleteIntermediates("PRJCOL", outdir);
+	deleteIntermediates(tempname_col, outdir);
 	if (intermed_times)	before = printTime(before);
 
 	// correct drift on depth coded image
 	if (do_registration){
-		print("correct drift on depth code");		
+		print("  correct drift on depth code");		
 		correctDriftRGB(rgb_concat);
 		if (intermed_times)	before = printTime(before);
 	}
 
 	// find final crop
-	print("output intermediates");
+	print("process separate projections");
 	selectImage(prj_concat);
 	if (do_registration)	findSignalSpace(crop_boundary);
 	else {
@@ -545,7 +543,7 @@ function depthCoding(){
 	precolorname = getTitle();
 	if (run_in_bg)	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices+" batch");
 	else					run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices);
-	rename("PRJCOL_" + precolorname);
+	rename(tempname_col + precolorname);
 	dumpMemory(3);
 
 	// reset dimensions
@@ -746,7 +744,7 @@ function printSettings(){
 	print("   scalebartarget:",scalebartarget);
 	print("   out_format:",out_format);
 	print("   saveSinglePRJs:",saveSinglePRJs);
-	print("   chunkSizeLimit:",chunkSizeLimit);
+	print("   reduceRAM:",reduceRAM);
 	print("   intermed_times:",intermed_times);
 	print("   run_in_bg:", run_in_bg);
 }
