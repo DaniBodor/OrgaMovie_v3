@@ -3,7 +3,7 @@ requires("1.53f");	// for Array.filter()
 
 colw = 8;
 title_fontsize = 15;
-github = "https://github.com/DaniBodor/OrgaMovie_v3";
+github = "https://github.com/DaniBodor/OrgaMovie_v3#input-settings";
 
 Dialog.create("OrgaMovie Settings");
 	Dialog.addHelp(github);
@@ -11,7 +11,7 @@ Dialog.create("OrgaMovie Settings");
 	Dialog.setInsets(10, 0, 0);
 	Dialog.addMessage("Input settings",title_fontsize);
 	Dialog.setInsets(0, 0, -2);
-	Dialog.addString("Input filetype", "nd2", colw-2);
+	Dialog.addString("Input filetype", "tif", colw-2);
 	Dialog.addNumber("Input channel", 1, 0, colw, "");
 	Dialog.addNumber("Time interval", 3, 0, colw, "min");
 	Dialog.addNumber("Z-step", 2.5, 1, colw, getInfo("micrometer.abbreviation"));
@@ -101,7 +101,7 @@ scalebarOptions = newArray(1, 2, 5, 7.5, 10, 15, 20, 25, 40, 50, 60, 75, 100, 12
 print("\\Clear");
 run("Close All");
 roiManager("reset");
-fixTemporalColorCode()		// fixes a bug in the Temporal Color Code plugin
+fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin
 setBatchMode(run_in_bg);	// bug, see above
 dumpMemory(3);
 
@@ -160,7 +160,7 @@ for (im = 0; im < im_list.length; im++) {
 		t_end   = chunkSize * (ch + 1);
 		print("opening file");
 		run("Bio-Formats Importer", "open=["+impath+"] t_begin="+t_begin+" t_end="+t_end+" t_step=1" +
-					"c_begin="+input_channel+" c_end="+input_channel+" c_step=1"+
+					" c_begin="+input_channel+" c_end="+input_channel+" c_step=1"+
 					" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
 		// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
 
@@ -247,7 +247,6 @@ for (im = 0; im < im_list.length; im++) {
 		run("Crop");
 		
 		correctDriftRGB(rgb_concat);
-		dep_reg = getTitle();
 		if (intermed_times)	before = printTime(before);
 	}
 
@@ -258,7 +257,7 @@ for (im = 0; im < im_list.length; im++) {
 
 
 	// prep and save separate projections
-	outputArray = newArray(prj_concat, dep_reg);
+	outputArray = newArray(prj_concat, rgb_concat);
 	for (x = 0; x < outputArray.length; x++) {
 		selectImage(outputArray[x]);
 		// crop image
@@ -299,8 +298,11 @@ for (im = 0; im < im_list.length; im++) {
 	if (intermed_times)		print("    image took",timeformat,"min to process");
 	run("Close All");
 
-	File.delete(TransMatrix_File);
-	print("\\Update:____________________________");
+	if (do_registration){
+		File.delete(TransMatrix_File);
+		print("\\Update:____________________________");
+	}
+	else print("____________________________");
 	selectWindow("Log");
 	saveAs("Text", outdir + "Log.txt");
 }
@@ -308,8 +310,8 @@ for (im = 0; im < im_list.length; im++) {
 dumpMemory(3); // clear memory
 print("----");
 print("----");
-printDateTime("All done,",im, "movies processed");
-print("Run finished without crashing.")
+printDateTime("All done; " + im +" movies processed");
+print("Run finished without crashing.");
 saveAs("Text", outdir + "Log.txt");
 
 ////////////////////////////////////// FUNCTIONS //////////////////////////////////////
@@ -349,7 +351,7 @@ function fileChunks(path){
 	sizeT = parseInt(line9[1]);		 // index 0 is key, index 1 is value
 	chunkSize = Math.ceil(sizeT/nImageParts_max/sizeC); // calculate number of time steps per chunk
 	nImageParts_true = Math.ceil(sizeT/chunkSize); // corrects nImageParts because some chunks could contain 0 frames
-	
+
 	// return file chunk parameters
 	return newArray(nImageParts_true,sizeT,chunkSize);
 }
@@ -652,7 +654,7 @@ function fuseImages(){
 	rename("HEAD2");
 	
 	// combine images
-	run("Combine...", "stack1=" + dep_reg + " stack2=" + prj_concat);	// main movies
+	run("Combine...", "stack1=" + rgb_concat + " stack2=" + prj_concat);	// main movies
 	rename("MAIN");
 	run("Combine...", "stack1=HEAD1 stack2=HEAD2"); // headers
 	rename("HEADS");
@@ -754,11 +756,11 @@ function dumpMemory(n){
 function fixTemporalColorCode(){
 	// fixes a bug in the Temporal Color Code plugin
 	plugindir = getDirectory("plugins");
-	path = plugindir + "Scripts\\Image\\Hyperstacks\\Temporal-Color_Code.ijm"
+	path = plugindir + "Scripts\\Image\\Hyperstacks\\Temporal-Color_Code.ijm";
 	TCCcode = File.openAsString(path);
 	
-	oldline = "lutA ="
-	newline = "lutA = getList(\"LUTs\"); //"
+	oldline = "lutA =";
+	newline = "lutA = getList(\"LUTs\"); //";
 	newcode = TCCcode.replace(oldline,newline);
 	
 	File.saveString(newcode, path);
