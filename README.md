@@ -9,21 +9,23 @@ https://user-images.githubusercontent.com/14219087/153039727-4fde4888-3540-4628-
 This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) previously created by Bas Ponsioen and René Overmeer, first published in _[Targeting mutant RAS in patient-derived colorectal cancer organoids by combinatorial drug screening](https://elifesciences.org/articles/18489)_, (eLife 2016;5:e18489 doi: 10.7554/eLife.18489).
 
 
-## How to get the macro
+## How to install OrgaMovie
 1) [Download](https://github.com/DaniBodor/OrgaMovie_v3/archive/refs/heads/main.zip) this repository by clicking on the link or on the green 'Code' button above and 'Download ZIP' (or use git pull).
 2) Extract your zip file
 3) Start FIJI and go to _Plugins>Install..._ &nbsp;&nbsp;&nbsp; <img align="middle" src="https://user-images.githubusercontent.com/14219087/153043733-e1f90753-01e7-4e4d-b06d-753f97aff7df.png" width=40%>
 
 4) Select OrgaMovie_v3.ijm from the location you downloaded and unzipped to and save it into you _.../fiji.app/plugins/Analyze/_ folder (or some other location you prefer)  
 5) Restart FiJi and it will show up in your _Plugins>Analyze_ menu &nbsp;&nbsp;&nbsp; <img align="middle" src="https://user-images.githubusercontent.com/14219087/153043552-0d984d64-351b-4f12-bb03-4bdc5b87dfa5.png" width=50%>
+6) Before the first time you run the macro, you must copy the relevant LUTs (lookup tables) into FiJi's LUT folder. You can copy them from your download location into your _"...\Fiji.app\luts"_ folder. You now need to restart FiJi if it was already open.
+    - If you can't find your FiJi location, just run the macro without doing this and it will open the folder for you. Don't forget to restart.
 
 
-## Running OrgaMovie_v3
+## Running the macro
 1) Put all the raw data you want to process into your input folder (images can be any size and any format that FiJi can handle)
-2) Select _OrgaMovie_v3_ from wherever you installed it (or [create a shortcut](https://imagej.net/learn/keyboard-shortcuts))
-3) Choose your settings (see below for explanation), hit OK
-4) Choose your input folder, hit OK
-6) Depending on the size of the files, the macro can take quite a while to run. At some stages it might seem like nothing is happening, but you can usually see whether it is still running by checking the log window (which states what is currently happening) and/or the status bar of FiJi (i.e. below the clickable icons).
+2) Select _OrgaMovie_v3_ from wherever you installed it (or [create a shortcut](https://imagej.net/learn/keyboard-shortcuts) for it)
+3) Choose your settings (see below for explanation), hit _OK_
+4) Choose your input folder, hit _Select_
+6) Depending on the size of the files, the macro can take a while to run. At some stages it might seem like nothing is happening, but you can usually see whether it is still running by checking the log window (which states what is currently happening) and/or the status bar of FiJi (i.e. below the clickable icons). To get a better idea of whether it's stuck or not, consider turning on "Print progress duration" in the [Settings](https://github.com/DaniBodor/OrgaMovie_v3/edit/main/README.md#imagej-settings)
 7) Your movies (and a log file) will be saved into a subfolder of your input folder called _/_OrgaMovies/_
 8) If the macro finished running without errors, the last line in the log window should read "Run finished without crashing."
 
@@ -53,6 +55,6 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 - Scalebar target width: select the ideal width of the scale bar in proportion to the image width. The true width of the scale bar will depend on a round number of microns that gives a scale bar of similar width to this target.
 
 ### ImageJ settings
-- Reduce RAM usage: The macro automatically detects how much RAM is available to FiJi and adjusts the maximum filesize based on this. This should work fine, but just in case you are using a lot of other heavy programs, tick this to halve the RAM used by this macro. If this is still too much, then either close some programs or adjust the memory available to ImageJ in the _"Edit>Options>Memory & Threads..."_ menu. (If ImageJ exceeds the available memory, it usually (but not always) gives a warning that this is the case).
-- Print progress duration: if checked, the log will output which process of the macro took how long.
+- Reduce RAM usage: The macro automatically detects how much RAM is available to FiJi and adjusts the maximum filesize based on this. This should work fine most of the time. Just in case you are having memory issues (or are using a lot of other heavy programs), tick this to halve the RAM used by this macro. If this is still too much, then either close some programs or adjust the memory available to ImageJ in the _"Edit>Options>Memory & Threads..."_ menu. (If ImageJ exceeds the available memory, it usually (but not always) gives a warning that this is the case).
+- Print progress duration: if checked, the log will output which process of the macro took how long. This can be useful when working with large files if you want to know whether the macro is stuck or not.
 
