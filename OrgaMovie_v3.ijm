@@ -222,14 +222,15 @@ for (im = 0; im < im_list.length; im++) {
 	run("Crop");
 	
 	// create registration file for drift correction
-	print("create registration file");
-	selectImage(prj_concat);
-	setSlice(nSlices/2);
-	TransMatrix_File = outdir + outname_base + "_TrMatrix.txt";
-	run("MultiStackReg", "stack_1="+prj_concat+" action_1=Align file_1=["+TransMatrix_File+"] stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
-	run(prj_LUT);
-	if (intermed_times)	before = printTime(before);
-
+	if (do_registration){
+		print("create registration file");
+		selectImage(prj_concat);
+		setSlice(nSlices/2);
+		TransMatrix_File = outdir + outname_base + "_TrMatrix.txt";
+		run("MultiStackReg", "stack_1="+prj_concat+" action_1=Align file_1=["+TransMatrix_File+"] stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body] save");
+		run(prj_LUT);
+		if (intermed_times)	before = printTime(before);
+	}
 
 	// open MAX and COLOR- projections
 	print("opening color projection of all parts");
@@ -240,13 +241,15 @@ for (im = 0; im < im_list.length; im++) {
 	if (intermed_times)	before = printTime(before);
 
 	// correct drift on depth coded image
-	print("correct drift on depth code");
-	roiManager("select", roiManager("count")-1);
-	run("Crop");
-	
-	correctDriftRGB(rgb_concat);
-	dep_reg = getTitle();
-	if (intermed_times)	before = printTime(before);
+	if (do_registration){
+		print("correct drift on depth code");
+		roiManager("select", roiManager("count")-1);
+		run("Crop");
+		
+		correctDriftRGB(rgb_concat);
+		dep_reg = getTitle();
+		if (intermed_times)	before = printTime(before);
+	}
 
 	// find final crop
 	print("output intermediates");
@@ -309,40 +312,9 @@ printDateTime("All done,",im, "movies processed");
 print("Run finished without crashing.")
 saveAs("Text", outdir + "Log.txt");
 
-
-
-
-
-//% STEPS TO TAKE IN MACRO
-// check filesizes; if too large allow for splitting?
-	// do this via python os if IJ does not have good tools to measure filesize
-	// or do via metadata (open crop) SizeC*SizeT*SizeX*SizeY*SizeZ*2^BitsPerPixel/(Bits/GB)
-	// or: open virtual stack, metadata has filesize (key: Size)
-// open file
-	// check for hyperstack
-	// if not, retry once?
-// generate Z-project
-	// apply LUT
-	// store for later (for right hand side of movie)
-// generate drift correction matrix
-	// Z-project
-	// multistackreg
-		// could this be done on final product instead? 
-			// NO, doesn not appear to work on RGBs
-// find ideal B&C
-	// what is substrate for this? maybe the Z-projection or potentially a Z/T-projection?
-// make color-projection for each frame
-	// remove single frame (Z-stack)
-		// alternatively, open single frame
-	// temporal color code
-// apply drift correction on final product
-// add time-stamp & depth-legend
-// save final
-	// export options
-		// AVI
-		// TIFF compiled (large file)
-		// TIFF split (separate smaller files, can be stored in 8bit grayscale to save MBs, then can add separate package to compile each part in LUT of choice)
-
+////////////////////////////////////// FUNCTIONS //////////////////////////////////////
+////////////////////////////////////// FUNCTIONS //////////////////////////////////////
+////////////////////////////////////// FUNCTIONS //////////////////////////////////////
 
 function fileChunks(path){
 	print_statement = "check and open file: " + path;
