@@ -1,5 +1,5 @@
-
 requires("1.53f");	// for Array.filter()
+installOrganoidLUT();	// checks if relevant LUTs are available
 
 colw = 8;
 title_fontsize = 15;
@@ -771,3 +771,17 @@ function fixTemporalColorCode(){
 }
 
 
+function installOrganoidLUT(){
+	LUTlist = getList("LUTs");
+	X = Array.filter(LUTlist,"Depth Organoid");
+	Y = Array.filter(LUTlist,"The Real Glow");
+	
+	if(X.length * Y.length == 0){
+		run("LUTs");
+		waitForUser("Add LUTs to folder","Please copy or move \"Depth Organoid.lut\" and \"The Real Glow.lut\" \n"+
+					"from the location into which you downloaded OrgaMovie\n" +
+					"to FiJi's LUT folder, which should have just opened."+
+					"\n \nThen restart FiJi.");
+		exit("restart FiJi after installing LUTs");
+	}
+}
