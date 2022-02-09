@@ -39,12 +39,12 @@ Dialog.create("OrgaMovie Settings");
 	output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
 	Dialog.addChoice("Output format", output_options, output_options[0]);
 	Dialog.setInsets(0, 40, 0);
-	Dialog.addCheckbox("Save intermediates", 1);
+	Dialog.addCheckbox("Save separate projections", 1);
 
 	Dialog.setInsets(20, 0, 0);
 	Dialog.addMessage("ImageJ settings",title_fontsize);
-	Dialog.setInsets(0, 0, -2);
-	Dialog.addNumber("Available RAM", 0, 0, colw, "GB (use 0 to auto-detect)");
+	Dialog.setInsets(0, 40, 0);
+	Dialog.addCheckbox("Reduce RAM usage", 0);
 	Dialog.setInsets(0, 40, 0);
 	Dialog.addCheckbox("Print progress duration", 1);
 	//Dialog.setInsets(0, 40, 0);
@@ -73,12 +73,13 @@ Dialog.show();
 
 	//output settings
 	out_format		= Dialog.getChoice();
-	save_intermed	= Dialog.getCheckbox();
+	saveSinglePRJs	= Dialog.getCheckbox();
 
 	//imagej settings
-	chunkSizeLimit	= Dialog.getNumber();
+	reduceRAM	= Dialog.getCheckbox();
 	IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
-	if (chunkSizeLimit == 0) chunkSizeLimit = IJmem/4;	// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
+	chunkSizeLimit = IJmem/4;						// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
+	if (reduceRAM) chunkSizeLimit = chunkSizeLimit / 2;	// in case someone runs into RAM problems, this should be sufficient
 	intermed_times	= Dialog.getCheckbox();
 	run_in_bg = false;	//apparently buggy; don't understand why. see github issues for info on bug
 
@@ -261,9 +262,11 @@ for (im = 0; im < im_list.length; im++) {
 		run("Crop");
 		run("Remove Overlay");	// fix for overlay box in RGB (obsolete?)
 		run("Select None");
-
-		saveAs("Tiff", outdir + outname_base + "_" + getTitle());
-		rename(outputArray[x]);	// fixes renaming after saving
+		
+		if (saveSinglePRJs){
+			saveAs("Tiff", outdir + outname_base + "_" + getTitle());
+			rename(outputArray[x]);	// fixes renaming after saving
+		}
 
 		// create scale bar and time stamp
 		scalebarsize = findScalebarSize();
@@ -276,8 +279,13 @@ for (im = 0; im < im_list.length; im++) {
 	print("assemble into OrgaMovie");
 	fuseImages();
 	savename = outdir + outname_base + "_OrgaMovie";
-	saveAs("Tiff", savename);
-	run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename + ".avi]");
+	
+	//output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
+	if (out_format != output_options[1])
+		saveAs("Tiff", savename);
+	if (out_format != output_options[2])	
+		run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename + ".avi]");
+	
 	roiManager("reset");
 	if (intermed_times)	before = printTime(before);
 
@@ -754,7 +762,7 @@ function printSettings(){
 	print("   crop_boundary:",crop_boundary);
 	print("   scalebartarget:",scalebartarget);
 	print("   out_format:",out_format);
-	print("   save_intermed:",save_intermed);
+	print("   saveSinglePRJs:",saveSinglePRJs);
 	print("   chunkSizeLimit:",chunkSizeLimit);
 	print("   intermed_times:",intermed_times);
 	print("   run_in_bg:", run_in_bg);
