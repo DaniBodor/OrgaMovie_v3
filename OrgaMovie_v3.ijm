@@ -206,8 +206,10 @@ for (im = 0; im < im_list.length; im++) {
 		close(ori);
 		if (intermed_times)	before = printTime(before);
 	}
+
+	// Assemble individual sub-projections into nice movie
 	
-	// Now assemble separate parts, register and make OrgaMovie
+	// Open MAX projections
 	print("____ opening max projection of all parts ____");
 	run("Image Sequence...", "select=["+outdir+"] dir=["+outdir+"] type=16-bit filter=PRJMAX_ sort");
 	rename("PRJ");
@@ -232,20 +234,19 @@ for (im = 0; im < im_list.length; im++) {
 		if (intermed_times)	before = printTime(before);
 	}
 
-	// open MAX and COLOR- projections
+	// open and crop COLOR projections
 	print("opening color projection of all parts");
 	run("Image Sequence...", "select=["+outdir+"] type=RGB dir=["+outdir+"] filter=PRJCOL_ sort");
 	rename("PRJCOL_" + outname_base);
 	rgb_concat = getTitle();
+	roiManager("select", roiManager("count")-1);
+	run("Crop");
 	deleteIntermediates("PRJCOL", outdir);
 	if (intermed_times)	before = printTime(before);
 
 	// correct drift on depth coded image
 	if (do_registration){
-		print("correct drift on depth code");
-		roiManager("select", roiManager("count")-1);
-		run("Crop");
-		
+		print("correct drift on depth code");		
 		correctDriftRGB(rgb_concat);
 		if (intermed_times)	before = printTime(before);
 	}
@@ -253,8 +254,11 @@ for (im = 0; im < im_list.length; im++) {
 	// find final crop
 	print("output intermediates");
 	selectImage(prj_concat);
-	findSignalSpace(crop_boundary);
-
+	if (do_registration)	findSignalSpace(crop_boundary);
+	else {
+		run("Select All");
+		roiManager("add");
+	}
 
 	// prep and save separate projections
 	outputArray = newArray(prj_concat, rgb_concat);
