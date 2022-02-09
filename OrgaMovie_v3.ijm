@@ -100,6 +100,7 @@ scalebarOptions = newArray(1, 2, 5, 7.5, 10, 15, 20, 25, 40, 50, 60, 75, 100, 12
 print("\\Clear");
 run("Close All");
 roiManager("reset");
+fixTemporalColorCode()		// fixes a bug in the Temporal Color Code plugin
 setBatchMode(run_in_bg);	// bug, see above
 dumpMemory(3);
 
@@ -295,8 +296,9 @@ for (im = 0; im < im_list.length; im++) {
 dumpMemory(3); // clear memory
 print("----");
 print("----");
-printDateTime("run finished");
-
+printDateTime("All done,",im, "movies processed");
+print("Run finished without crashing.")
+saveAs("Text", outdir + "Log.txt");
 
 
 
@@ -761,6 +763,20 @@ function printSettings(){
 
 function dumpMemory(n){
 	for (i = 0; i < n; i++) 	run("Collect Garbage");
+}
+
+
+function fixTemporalColorCode(){
+	// fixes a bug in the Temporal Color Code plugin
+	plugindir = getDirectory("plugins");
+	path = plugindir + "Scripts\\Image\\Hyperstacks\\Temporal-Color_Code.ijm"
+	TCCcode = File.openAsString(path);
+	
+	oldline = "lutA ="
+	newline = "lutA = getList(\"LUTs\"); //"
+	newcode = TCCcode.replace(oldline,newline);
+	
+	File.saveString(newcode, path);
 }
 
 
