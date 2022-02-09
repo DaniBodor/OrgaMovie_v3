@@ -31,7 +31,7 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 <img align="right" src="https://user-images.githubusercontent.com/14219087/153049632-3072f0de-d0ee-455d-98e5-f76747955bef.png" width=30%>
 
 ### Input settings
-- Input filetype: write the extension of the filetype you want to use (so that all files i the input folder with a different extension are ignored).
+- Input filetype: write the extension of the filetype you want to use (so that all files in the input folder with a different extension are ignored).
 - Input channel: set the channel to use in terms of channel order (so N<sup>th</sup> channel).
     - Can be ignored if single-channel (i.e. single-color) data is used.
     - Because false colors are used to signify depth, it is unclear how to implement multi-channel depth in this macro. Talk to me if you are interested in this to see if we can figure something out.
