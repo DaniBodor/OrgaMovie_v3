@@ -160,6 +160,7 @@ for (im = 0; im < im_list.length; im++) {
 		t_end   = chunkSize * (ch + 1);
 		print("opening file");
 		run("Bio-Formats Importer", "open=["+impath+"] t_begin="+t_begin+" t_end="+t_end+" t_step=1" +
+					"c_begin="+input_channel+" c_end="+input_channel+" c_step=1"+
 					" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
 		// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
 
@@ -368,9 +369,13 @@ function fileChunks(path){
 
 	// calculate how many chunks it needs to be opened in
 	nImageParts_max = Math.ceil(filesize/true_chunkSizeLimit);	// nImageparts based on size limit
+	
+	line8 = split(MD_lines[8],"\t"); // metadata line 8 contains contains info on number of channels
+	sizeC = parseInt(line8[1]);		 // index 0 is key, index 1 is value
+	
 	line9 = split(MD_lines[9],"\t"); // metadata line 9 contains contains info on number of time steps
 	sizeT = parseInt(line9[1]);		 // index 0 is key, index 1 is value
-	chunkSize = Math.ceil(sizeT/nImageParts_max); // calculate number of time steps per chunk
+	chunkSize = Math.ceil(sizeT/nImageParts_max/sizeC); // calculate number of time steps per chunk
 	nImageParts_true = Math.ceil(sizeT/chunkSize); // corrects nImageParts because some chunks could contain 0 frames
 	
 	// return file chunk parameters
