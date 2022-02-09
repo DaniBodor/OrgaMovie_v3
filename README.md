@@ -27,7 +27,7 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 4) Choose your input folder, hit _Select_
 6) Depending on the size of the files, the macro can take a while to run. At some stages it might seem like nothing is happening, but you can usually see whether it is still running by checking the log window (which states what is currently happening) and/or the status bar of FiJi (i.e. below the clickable icons). To get a better idea of whether it's stuck or not, consider turning on "Print progress duration" in the [Settings](https://github.com/DaniBodor/OrgaMovie_v3/edit/main/README.md#imagej-settings)
 7) Your movies (and a log file) will be saved into a subfolder of your input folder called _/_OrgaMovies/_
-8) If the macro finished running without errors, the last line in the log window should read "Run finished without crashing."
+8) If the macro finished running without errors, the last line in the log window should read "Run finished"
 
 
 ## OrgaMovie Settings
