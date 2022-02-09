@@ -779,8 +779,8 @@ function installOrganoidLUT(){
 	if(X.length * Y.length == 0){
 		run("LUTs");
 		waitForUser("Add LUTs to folder","Please copy or move \"Depth Organoid.lut\" and \"The Real Glow.lut\" \n"+
-					"from the location into which you downloaded OrgaMovie\n" +
-					"to FiJi's LUT folder, which should have just opened."+
+					"from the LUT folder in the location into which you downloaded OrgaMovie\n" +
+					"into FiJi's LUT folder, which should have just opened."+
 					"\n \nThen restart FiJi.");
 		exit("restart FiJi after installing LUTs");
 	}
