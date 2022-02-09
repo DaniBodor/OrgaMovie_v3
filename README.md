@@ -19,43 +19,40 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 
 
 ## Running OrgaMovie_v3
-1) Put all the raw data you want to process into a folder (images can be any size and any format that FiJi can handle)
+1) Put all the raw data you want to process into your input folder (images can be any size and any format that FiJi can handle)
 2) Select _OrgaMovie_v3_ from wherever you installed it (or [create a shortcut](https://imagej.net/learn/keyboard-shortcuts))
 3) Choose your settings (see below for explanation), hit OK
-4) Choose your data input folder, hit OK
-5) Your movies (and a log file) will now be saved into a subfolder called _/_OrgaMovies/_
-6) If the macro finished running without errors, the last line in the log window should read "Run finished without crashing."
+4) Choose your input folder, hit OK
+6) Depending on the size of the files, the macro can take quite a while to run. At some stages it might seem like nothing is happening, but you can usually see whether it is still running by checking the log window (which states what is currently happening) and/or the status bar of FiJi (i.e. below the clickable icons).
+7) Your movies (and a log file) will be saved into a subfolder of your input folder called _/_OrgaMovies/_
+8) If the macro finished running without errors, the last line in the log window should read "Run finished without crashing."
 
 
 ## OrgaMovie Settings
-<img align="right" src="https://user-images.githubusercontent.com/14219087/153049632-3072f0de-d0ee-455d-98e5-f76747955bef.png" width=30%>
+<img align="right" src="https://user-images.githubusercontent.com/14219087/153222072-d41836bb-7be9-48bc-8043-5a2ba8a209f6.png" width=25%>
 
-### Input settings
+### Input/output settings
 - Input filetype: write the extension of the filetype you want to use (so that all files in the input folder with a different extension are ignored).
 - Input channel: set the channel to use in terms of channel order (so N<sup>th</sup> channel).
     - Can be ignored if single-channel (i.e. single-color) data is used.
     - Because false colors are used to signify depth, it is unclear how to implement multi-channel depth in this macro. Talk to me if you are interested in this to see if we can figure something out.
 - Time interval: set the interval (in minutes) between consecutive frames. This is used in the time-stamp of the movie.
 - Z-step: set the axial step size (in microns). This is used for the color-bar legend.
+- Output format: Choose whether output videos should be in between _\*.avi_ or _\*.tif_ or both.
+    - TIFs are easier to use for downstream analysis in ImageJ but require significantly more diskspace than AVIs (~25-50x larger files).
+- Save intermediates: if this is checked, then the depth and max projections are also saved as separate \*.tifs without any legend, etc
 
 ### Movie settings
 - Frame rate: The frame rate of the output movie (for _\*.avi_). Set how many seconds each frame stays in view when playing the movie.
 - Apply drift correction: Untick this if you do not want to correct for drift (or jitter) of your movies.
 - Depth coding: select look up table (LUT) for depth coding.
 - Projection LUT: select look up table (LUT) for the max projection.
-- Pixel saturation: sets % of saturated pixels in output. Larger number means more saturation but also brighter images (and vice versa).
-- Min intensity method: select threshold method to detect the background intensity.
-- Min intensity factor: multiplication factor for background intensity. Larger number will cut off more dim signals but also generate brighter images.
-- Detect crop region: select threshold method to detect the region with relevant signal.
-- Crop boundary: choose how much larger the crop region should be compared to the automatically detected (this number will be added in each direction).
+- Pixel saturation: sets % of saturated pixels in output. Larger number gives brighter image with a larger proportion of saturated pixels.
+- Min intensity factor: multiplication factor for background intensity. Larger number gives brighter image with more dim signals cut off.
+- Crop boundary: The macro automatically detects the main signal region. This settings allows you to increase (in each direction) the cropped region surrounding this.
 - Scalebar target width: select the ideal width of the scale bar in proportion to the image width. The true width of the scale bar will depend on a round number of microns that gives a scale bar of similar width to this target.
 
-### Output settings
-- Output format: Choose whether output videos should be in between _\*.avi_ or _\*.tif_ or both.
-    - TIFs are easier to use for downstream analysis in ImageJ but require significantly more diskspace than AVIs (~25-50x larger files).
-- Save intermediates: if this is checked, then the depth and max projections are also saved as separate \*.tifs without any legend, etc
-
 ### ImageJ settings
-- Available RAM: set to 0 to automatically detect. If you notice that the macro regularly crashes due to limited RAM (you will get an error message stating this), then you can set a limit here. The log file will state what the previous limit was and you can test some lower number than that.
-- Print progress duration: if checked, the log file will keep track of which process of the macro takes how long.
+- Reduce RAM usage: The macro automatically detects how much RAM is available to FiJi and adjusts the maximum filesize based on this. This should work fine, but just in case you are using a lot of other heavy programs, tick this to halve the RAM used by this macro. If this is still too much, then either close some programs or adjust the memory available to ImageJ in the _"Edit>Options>Memory & Threads..."_ menu. (If ImageJ exceeds the available memory, it usually (but not always) gives a warning that this is the case).
+- Print progress duration: if checked, the log will output which process of the macro took how long.
 
