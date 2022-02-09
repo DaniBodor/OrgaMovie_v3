@@ -306,15 +306,24 @@ for (im = 0; im < im_list.length; im++) {
 	}
 	else print("____________________________");
 	selectWindow("Log");
-	saveAs("Text", outdir + "Log.txt");
+	saveAs("Text", outdir + "Log_InProgress.txt");
 }
 //run("Tile");
 dumpMemory(3); // clear memory
 print("----");
 print("----");
 printDateTime("All done; " + im +" movies processed");
+LogString = getInfo("log");
+LogArray = split(LogString, "\n");
+datetime = substring(LogArray[LogArray.length-1],0,15);
+datetime = datetime.replace(" ","_");
+datetime = datetime.replace(":","");
+
 print("Run finished without crashing.");
-saveAs("Text", outdir + "Log.txt");
+selectWindow("Log");
+saveAs("Text", outdir + "Log_"+datetime+".txt");
+File.delete(outdir + "Log_InProgress.txt");
+print("\\Update:");
 
 ////////////////////////////////////// FUNCTIONS //////////////////////////////////////
 ////////////////////////////////////// FUNCTIONS //////////////////////////////////////
@@ -676,10 +685,10 @@ function deleteIntermediates(filestart, directory){
 			File.delete(directory + L[i]);
 
 			// this prints a 1, which I want to get rid of...
-			Log = getInfo("log");
-			Log = substring(Log, 0, lengthOf(Log)-3);
+			LogString = getInfo("log");
+			LogString = substring(LogString, 0, lengthOf(LogString)-3);
 			print("\\Clear");
-			print(Log);
+			print(LogString);
 		}
 	}
 }
