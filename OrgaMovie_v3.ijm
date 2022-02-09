@@ -9,12 +9,16 @@ Dialog.create("OrgaMovie Settings");
 	Dialog.addHelp(github);
 	
 	Dialog.setInsets(10, 0, 0);
-	Dialog.addMessage("Input settings",title_fontsize);
+	Dialog.addMessage("Input/output settings",title_fontsize);
 	Dialog.setInsets(0, 0, -2);
-	Dialog.addString("Input filetype", "tif", colw-2);
+	Dialog.addString("Input filetype", "nd2", colw-2);
 	Dialog.addNumber("Input channel", 1, 0, colw, "");
 	Dialog.addNumber("Time interval", 3, 0, colw, "min");
 	Dialog.addNumber("Z-step", 2.5, 1, colw, getInfo("micrometer.abbreviation"));
+	output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
+	Dialog.addChoice("Output format", output_options, output_options[0]);
+	Dialog.setInsets(0, 40, 0);
+	Dialog.addCheckbox("Save separate projections", 0);
 
 	Dialog.setInsets(20, 0, 0);
 	Dialog.addMessage("\nMovie settings",title_fontsize);
@@ -26,20 +30,9 @@ Dialog.create("OrgaMovie Settings");
 	Dialog.addChoice("Depth coding", LUTlist, "Depth Organoid");
 	Dialog.addChoice("Projection LUT", LUTlist, "The Real Glow");
 	Dialog.addNumber("Pixel saturation", 0.1, 2, colw, "%");
-	thresh_methods = getList("threshold.methods");
-	Dialog.addChoice("Min intensity method", thresh_methods, "Percentile");
 	Dialog.addNumber("Min intensity factor", 1, 1, colw, "");
-	Dialog.addChoice("Detect crop region", thresh_methods, "MinError");
 	Dialog.addNumber("Crop boundary", 24, 0, colw, "pixels");
 	Dialog.addNumber("Scalebar target width", 20, 0, colw, "% of total width");
-
-	Dialog.setInsets(20, 0, 0);
-	Dialog.addMessage("Output settings",title_fontsize);
-	Dialog.setInsets(0, 0, -2);
-	output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
-	Dialog.addChoice("Output format", output_options, output_options[0]);
-	Dialog.setInsets(0, 40, 0);
-	Dialog.addCheckbox("Save separate projections", 1);
 
 	Dialog.setInsets(20, 0, 0);
 	Dialog.addMessage("ImageJ settings",title_fontsize);
@@ -53,11 +46,13 @@ Dialog.create("OrgaMovie Settings");
 Dialog.show();
 	// retrieve info from dialog window
 	
-	// input settings
+	// input/output settings
 	input_filetype 	= Dialog.getString();
 	input_channel 	= Dialog.getNumber();
 	T_step 			= Dialog.getNumber();
 	Z_step 			= Dialog.getNumber();
+	out_format		= Dialog.getChoice();
+	saveSinglePRJs	= Dialog.getCheckbox();
 	
 	//movie settings
 	framerate 		= Dialog.getNumber();
@@ -65,15 +60,9 @@ Dialog.show();
 	depth_LUT 		= Dialog.getChoice();
 	prj_LUT  		= Dialog.getChoice();
 	saturate 		= Dialog.getNumber();
-	min_thresh_meth	= Dialog.getChoice();
 	minBrightFactor	= Dialog.getNumber();
-	crop_threshold	= Dialog.getChoice();
 	crop_boundary	= Dialog.getNumber();
 	scalebartarget	= Dialog.getNumber()/100;	// proportion of image width best matching scale bar width
-
-	//output settings
-	out_format		= Dialog.getChoice();
-	saveSinglePRJs	= Dialog.getCheckbox();
 
 	//imagej settings
 	reduceRAM	= Dialog.getCheckbox();
@@ -83,12 +72,15 @@ Dialog.show();
 	intermed_times	= Dialog.getCheckbox();
 	run_in_bg = false;	//apparently buggy; don't understand why. see github issues for info on bug
 
-// SETTINGS NOT IN DIALOG
+//// SETTINGS NOT IN DIALOG
+// visual settings
+min_thresh_meth = "Percentile";
+crop_threshold = "MinError";
+// filename settings
 outdirname = "_OrgaMovies";
 tempname_col = "_TEMP_PRJCOL_";
 tempname_max = "_TEMP_PRJMAX_";
-
-// header & scalebar
+// header & scalebar settings
 header_height = 48; // pixel height of header
 fontsize = round(header_height/3);
 header_pixoffset = 4;
@@ -737,22 +729,23 @@ function printDateTime(suffix){
 
 function printSettings(){
 	print("Settings from dialog");
+	//input/output settings
 	print("   input_filetype:", input_filetype);
 	print("   input_channel:", input_channel);
 	print("   T_step:", T_step);
 	print("   Z_step:", Z_step);
+	print("   out_format:",out_format);
+	print("   saveSinglePRJs:",saveSinglePRJs);	
+	//movie settings
 	print("   framerate:",framerate);
 	print("   do_registration:", do_registration);
 	print("   depth_LUT:",depth_LUT);
 	print("   prj_LUT:",prj_LUT);
 	print("   saturate:",saturate);
-	print("   min_thresh_meth:",min_thresh_meth);
 	print("   minBrightFactor:",minBrightFactor);
-	print("   crop_threshold:",crop_threshold);
 	print("   crop_boundary:",crop_boundary);
 	print("   scalebartarget:",scalebartarget);
-	print("   out_format:",out_format);
-	print("   saveSinglePRJs:",saveSinglePRJs);
+	// IJ settigs
 	print("   reduceRAM:",reduceRAM);
 	print("   intermed_times:",intermed_times);
 	print("   run_in_bg:", run_in_bg);
