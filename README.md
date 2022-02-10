@@ -38,7 +38,7 @@ You can check which (if any) of these are already installed by hitting Ctrl+l or
 
 
 ## Running the macro
-1) Make sure you have no unsaved stuff open in FiJi, as all open images/measurements/ROIs/etc will be closed or overwritten without without saving.
+1) Make sure you have no unsaved stuff open in FiJi, as all open images/results/ROIs/Logs/etc will be closed or overwritten without without saving.
 2) Put all the raw data you want to process into your input folder (images can be any size and any format that FiJi can handle).
 3) Select _OrgaMovie_v3_ from wherever you installed it (or [create a shortcut](https://imagej.net/learn/keyboard-shortcuts) for it).
 4) Choose your settings (see below for explanation), hit _OK_.
