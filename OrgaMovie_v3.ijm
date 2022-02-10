@@ -1,10 +1,17 @@
 requires("1.53f");	// for Array.filter()
-installOrganoidLUT();	// checks if relevant LUTs are available
+requireLUTs();	// checks if relevant LUTs are available
 
 colw = 8;
 title_fontsize = 15;
 github = "https://github.com/DaniBodor/OrgaMovie_v3#input-settings";
 
+// load default settings
+//defaults_dir = getDirectory("imagej") + "defaults" + File.separator;
+//File.makeDirectory(defaults_dir);
+//defaults_file = defaults_dir + "OrgaMovie_v3.txt";
+//defaults = import_defaults();
+
+// open dialog
 Dialog.create("OrgaMovie Settings");
 	Dialog.addHelp(github);
 	
@@ -44,33 +51,41 @@ Dialog.create("OrgaMovie Settings");
 	//Dialog.addCheckbox("Run in background (doesn't work yet)", 0);
 
 Dialog.show();
-	// retrieve info from dialog window
+	// move settings from dialog window into a key/value list
+	List.clear();
 	
 	// input/output settings
-	input_filetype 	= Dialog.getString();
-	input_channel 	= Dialog.getNumber();
-	T_step 			= Dialog.getNumber();
-	Z_step 			= Dialog.getNumber();
-	out_format		= Dialog.getChoice();
-	saveSinglePRJs	= Dialog.getCheckbox();
+	List.set("input_filetype", Dialog.getString());
+	List.set("input_channel", Dialog.getNumber());
+	List.set("T_step", Dialog.getNumber());
+	List.set("Z_step", Dialog.getNumber());
+	List.set("out_format", Dialog.getChoice());
+	List.set("saveSinglePRJs", Dialog.getCheckbox());
 	
 	//movie settings
-	framerate 		= Dialog.getNumber();
-	do_registration	= Dialog.getCheckbox();
-	depth_LUT 		= Dialog.getChoice();
-	prj_LUT  		= Dialog.getChoice();
-	saturate 		= Dialog.getNumber();
-	minBrightFactor	= Dialog.getNumber();
-	crop_boundary	= Dialog.getNumber();
-	scalebartarget	= Dialog.getNumber()/100;	// proportion of image width best matching scale bar width
+	List.set("framerate", Dialog.getNumber());
+	List.set("do_registration", Dialog.getCheckbox());
+        do_registration = List.get("do_registration");
+	List.set("depth_LUT", Dialog.getChoice());
+        depth_LUT = List.get("depth_LUT");
+	List.set("prj_LUT", Dialog.getChoice());
+        prj_LUT = List.get("prj_LUT");
+	List.set("satpix", Dialog.getNumber());
+	List.set("minBrightFactor", Dialog.getNumber());
+	List.set("crop_boundary", Dialog.getNumber());
+	List.set("scalebartarget", Dialog.getNumber());	// proportion of image width best matching scale bar width
 
 	//imagej settings
-	reduceRAM	= Dialog.getCheckbox();
+	List.set("reduceRAM", Dialog.getCheckbox());
 	IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
 	chunkSizeLimit = IJmem/4;						// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
-	if (reduceRAM) chunkSizeLimit = chunkSizeLimit / 2;	// in case someone runs into RAM problems, this should be sufficient
-	intermed_times	= Dialog.getCheckbox();
+	if (List.get("reduceRAM")) chunkSizeLimit = chunkSizeLimit / 2;	// in case someone runs into RAM problems, this should be sufficient
+	List.set("intermed_times", Dialog.getCheckbox());
+        intermed_times = List.get("intermed_times");
 	run_in_bg = false;	//apparently buggy; don't understand why. see github issues for info on bug
+
+InputSettings = List.getList;
+//print(InputSettings);
 
 //// SETTINGS NOT IN DIALOG
 // visual settings
@@ -102,7 +117,7 @@ dumpMemory(3);
 // find all images in base directory
 dir = getDirectory("Choose directory with images to process");
 list = getFileList(dir);
-im_list = Array.filter(list,"."+input_filetype);
+im_list = Array.filter(list,"." + List.get("input_filetype"));
 
 // prep output folders
 outdir = dir + outdirname + File.separator;
@@ -110,7 +125,7 @@ if (im_list.length > 0) File.makeDirectory(outdir);
 else	{
 	printDateTime("");
 	print("***MACRO ABORTED***");
-	print("no files with extension:",input_filetype);
+	print("no files with extension:",List.get("input_filetype"));
 	print("were found in: "+dir);
 	exit(getInfo("log"));
 }
@@ -120,7 +135,8 @@ else	{
 
 // start running on all images
 printDateTime("running OrgaMovie macro on: "+ dir);
-printSettings();
+print("Input settings from dialog:");
+print(" ",InputSettings.replace("\n","\n  "));	// kinda funky way to make it print all the settings with 2 spacess before
 print("____________________________");
 print("size limit for 16-bit images is", round(chunkSizeLimit*10)/10, "GB");
 print("");
@@ -154,7 +170,7 @@ for (im = 0; im < im_list.length; im++) {
 		t_end   = chunkSize * (ch + 1);
 		print("opening file");
 		run("Bio-Formats Importer", "open=["+impath+"] t_begin="+t_begin+" t_end="+t_end+" t_step=1" +
-					" c_begin="+input_channel+" c_end="+input_channel+" c_step=1"+
+					" c_begin="+List.get("input_channel")+" c_end="+List.get("input_channel")+" c_step=1"+
 					" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
 		// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
 
@@ -209,7 +225,7 @@ for (im = 0; im < im_list.length; im++) {
 
 	// crop around signal and save projection
 	print("  first crop and registration");
-	findSignalSpace(crop_boundary);
+	findSignalSpace(List.get("crop_boundary"));
 	roiManager("select", roiManager("count")-1);
 	run("Crop");
 	
@@ -244,7 +260,7 @@ for (im = 0; im < im_list.length; im++) {
 	// find final crop
 	print("process separate projections");
 	selectImage(prj_concat);
-	if (do_registration)	findSignalSpace(crop_boundary);
+	if (do_registration)	findSignalSpace(List.get("crop_boundary"));
 	else {
 		run("Select All");
 		roiManager("add");
@@ -260,7 +276,7 @@ for (im = 0; im < im_list.length; im++) {
 		run("Remove Overlay");	// fix for overlay box in RGB (obsolete?)
 		run("Select None");
 		
-		if (saveSinglePRJs){
+		if (List.get("saveSinglePRJs")){
 			saveAs("Tiff", outdir + outname_base + "_" + getTitle());
 			rename(outputArray[x]);	// fixes renaming after saving
 		}
@@ -268,7 +284,7 @@ for (im = 0; im < im_list.length; im++) {
 		// create scale bar and time stamp
 		scalebarsize = findScalebarSize();
 		run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
-		timeStamper();
+		timeStamper(List.get("T_step"));
 	}
 	if (intermed_times)	before = printTime(before);
 
@@ -278,10 +294,10 @@ for (im = 0; im < im_list.length; im++) {
 	savename = outdir + outname_base + "_OrgaMovie";
 	
 	//output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
-	if (out_format != output_options[1])
+	if (List.get("out_format") != output_options[1])
 		saveAs("Tiff", savename);
-	if (out_format != output_options[2])	
-		run("AVI... ", "compression=JPEG frame="+framerate+" save=[" + savename + ".avi]");
+	if (List.get("out_format") != output_options[2])	
+		run("AVI... ", "compression=JPEG frame="+List.get("framerate")+" save=[" + savename + ".avi]");
 	
 	roiManager("reset");
 	if (intermed_times)	before = printTime(before);
@@ -419,11 +435,11 @@ function setBC(){
 	// get min brightness setting of threshold method
 	setAutoThreshold(min_thresh_meth);
 	getThreshold(_,minT);
-	minT = minT * minBrightFactor;
+	minT = minT * List.get("minBrightFactor");
 	
 	// get max brightness setting based on percentile of overexposed pixels
 	//maxT = getPercentile(overexp_percile);
-	run("Enhance Contrast", "saturated="+saturate);
+	run("Enhance Contrast", "saturated="+List.get("satpix"));
 	getMinAndMax(_, maxT);
 
 	// set min and max according to rules above
@@ -557,7 +573,7 @@ function depthCoding(){
 function findScalebarSize(){
 	// get ideal width for scale bar
 	fullW = getWidth() * pixelWidth;
-	idealW = fullW * scalebartarget;
+	idealW = fullW * List.get("scalebartarget") / 100;
 
 	// initialize in case full width is smaller than all options 
 		// (unlikely, but don't want any chance of a crash)
@@ -586,7 +602,7 @@ function makeHeaderImage(title, type){
 	// specify LUT min/max labels depending on type
 	if (type == "D"){
 		scalemin = "0";
-		maxD = Z_step * (slices-1);	// max depth of organoid
+		maxD = parseFloat(List.get("Z_step")) * (slices-1);	// max depth of organoid
 		maxD = round(maxD*10)/10;	// make max 1 decimal long
 		scalemax = toString(maxD);	// convert to string
 	}
@@ -687,7 +703,7 @@ function deleteIntermediates(filestart, directory){
 }
 
 
-function timeStamper(){
+function timeStamper(T_step){
 	// fix offsetting bug of time stamper in 00:00 format
 	w_dec_form = getStringWidth("00:00");
 	w_num_form = getStringWidth(toString(frames*T_step)+"_");
@@ -728,30 +744,6 @@ function printDateTime(suffix){
 	print(date, time, "-", suffix);
 }
 
-function printSettings(){
-	print("Settings from dialog");
-	//input/output settings
-	print("   input_filetype:", input_filetype);
-	print("   input_channel:", input_channel);
-	print("   T_step:", T_step);
-	print("   Z_step:", Z_step);
-	print("   out_format:",out_format);
-	print("   saveSinglePRJs:",saveSinglePRJs);	
-	//movie settings
-	print("   framerate:",framerate);
-	print("   do_registration:", do_registration);
-	print("   depth_LUT:",depth_LUT);
-	print("   prj_LUT:",prj_LUT);
-	print("   saturate:",saturate);
-	print("   minBrightFactor:",minBrightFactor);
-	print("   crop_boundary:",crop_boundary);
-	print("   scalebartarget:",scalebartarget);
-	// IJ settigs
-	print("   reduceRAM:",reduceRAM);
-	print("   intermed_times:",intermed_times);
-	print("   run_in_bg:", run_in_bg);
-}
-
 
 function dumpMemory(n){
 	for (i = 0; i < n; i++) 	run("Collect Garbage");
@@ -772,7 +764,7 @@ function fixTemporalColorCode(){
 }
 
 
-function installOrganoidLUT(){
+function requireLUTs(){
 	LUTlist = getList("LUTs");
 	X = Array.filter(LUTlist,"Depth Organoid");
 	Y = Array.filter(LUTlist,"The Real Glow");
