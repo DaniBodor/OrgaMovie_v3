@@ -311,7 +311,7 @@ datetime = substring(LogArray[LogArray.length-1],0,15);
 datetime = datetime.replace(" ","_");
 datetime = datetime.replace(":","");
 
-print("Run finished without crashing.");
+print("Run finished");
 selectWindow("Log");
 saveAs("Text", outdir + "Log_"+datetime+".txt");
 File.delete(outdir + "Log_InProgress.txt");
@@ -438,7 +438,7 @@ function correctDriftRGB(im){
 	
 	// split channels
 	selectImage(im);
-	run("Duplicate...", "duplicate");
+	pre = getTitle();
 	run("Split Channels");
 	
 	// do registration on each channel
@@ -449,6 +449,7 @@ function correctDriftRGB(im){
 		run("MultiStackReg", "stack_1=["+names[c]+"] action_1=[Load Transformation File] file_1=["+TransMatrix_File+"] stack_2=None action_2=Ignore file_2=[] transformation=[Rigid Body]");
 	}
 	run("Merge Channels...", "c1=[RED] c2=[GREEN] c3=[BLUE]");
+	rename(pre);
 }
 
 
