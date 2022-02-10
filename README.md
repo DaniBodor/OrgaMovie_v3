@@ -15,19 +15,35 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 3) Start FIJI and go to _Plugins>Install..._ &nbsp;&nbsp;&nbsp; <img align="middle" src="https://user-images.githubusercontent.com/14219087/153043733-e1f90753-01e7-4e4d-b06d-753f97aff7df.png" width=40%>
 
 4) Select OrgaMovie_v3.ijm from the location you downloaded and unzipped to and save it into you _.../fiji.app/plugins/Analyze/_ folder (or some other location you prefer)  
-5) Restart FiJi and it will show up in your _Plugins>Analyze_ menu &nbsp;&nbsp;&nbsp; <img align="middle" src="https://user-images.githubusercontent.com/14219087/153043552-0d984d64-351b-4f12-bb03-4bdc5b87dfa5.png" width=50%>
-6) Before the first time you run the macro, you must copy the relevant LUTs (lookup tables) into FiJi's LUT folder. You can copy them from your download location into your _"...\Fiji.app\luts"_ folder. You now need to restart FiJi if it was already open.
+5) Restart FiJi and it will show up in your _Plugins>Analyze_ menu &nbsp;&nbsp;&nbsp; <img align="middle" src="https://user-images.githubusercontent.com/14219087/153418840-670b5e3f-fd1d-460c-aec6-d1b5f5a96feb.png" width=50%>
+
+[//]: # (https://user-images.githubusercontent.com/14219087/153043552-0d984d64-351b-4f12-bb03-4bdc5b87dfa5.png = prewvious version of image)
+
+### External content required before you can run the macro
+There is a bit of external content required for this macro which may or may not be present on your installation of FiJi. After installing any of these, you need to restart FiJi for it to actually work.  
+<img align="right" src=https://user-images.githubusercontent.com/14219087/153417850-0e500496-99b5-48d1-b6ee-7d646df1e794.png width=40%>
+
+You can check which (if any) of these are already installed by hitting Ctrl+l or just l (= lowercase L) in FiJi to open the focus search bar and start typing the plugin/extension name. If it's installed, it will be listed in the Commands list on the left. 
+
+-  There are a couple of color lookup tables (LUTs) that I find work well for the depth coding and maximum projection (see example movie above; these LUTS were originally developed for [this paper](https://elifesciences.org/articles/18489)). Although you can choose your favorite LUT in the settings, I have coded it in a way that it requires you to at least add the default ones to your LUT list. To add them:
+    - You can copy them from your download location into your _"...\Fiji.app\luts"_ folder.
     - If you can't find your FiJi location, just run the macro without doing this and it will open the folder for you. Don't forget to restart.
+- There are 2 external plugins required for image registraion (drift correction):
+    - [MultiStackReg](http://bradbusse.net/downloads.html) can be downloaded from Brad Busse's website.
+    - [TurboReg](http://bigwww.epfl.ch/thevenaz/turboreg/) can be downloaded from the EPFL's website or in FiJi by activating the BIG-EPFL update site (see [here](https://imagej.net/update-sites/following) for an explanation on how to do this).
+- The macro relies on a tiny bit of Python code for which it needs a plugin called Jython.jar. If this is not yet installed in your FiJi, it will automatically ask if you want to install it. Just click OK.
+
 
 
 ## Running the macro
-1) Put all the raw data you want to process into your input folder (images can be any size and any format that FiJi can handle)
-2) Select _OrgaMovie_v3_ from wherever you installed it (or [create a shortcut](https://imagej.net/learn/keyboard-shortcuts) for it)
-3) Choose your settings (see below for explanation), hit _OK_
-4) Choose your input folder, hit _Select_
-6) Depending on the size of the files, the macro can take a while to run. At some stages it might seem like nothing is happening, but you can usually see whether it is still running by checking the log window (which states what is currently happening) and/or the status bar of FiJi (i.e. below the clickable icons). To get a better idea of whether it's stuck or not, consider turning on "Print progress duration" in the [Settings](https://github.com/DaniBodor/OrgaMovie_v3/edit/main/README.md#imagej-settings)
-7) Your movies (and a log file) will be saved into a subfolder of your input folder called _/_OrgaMovies/_
-8) If the macro finished running without errors, the last line in the log window should read "Run finished"
+1) Put all the raw data you want to process into your input folder (images can be any size and any format that FiJi can handle).
+2) Make sure you have no unsaved stuff open in FiJi as all open images/measurements/ROI lists/etc will be closed or overwritten without without saving.
+3) Select _OrgaMovie_v3_ from wherever you installed it (or [create a shortcut](https://imagej.net/learn/keyboard-shortcuts) for it).
+4) Choose your settings (see below for explanation), hit _OK_.
+5) Choose your input folder, hit _Select_.
+6) Depending on the size of the files, the macro can take a while to run. At some stages it might seem like nothing is happening, but you can usually see whether it is still running by checking the log window (which states what is currently happening) and/or the status bar of FiJi (i.e. below the clickable icons). To get a better idea of whether it's stuck or not, consider turning on "Print progress duration" in the [Settings](https://github.com/DaniBodor/OrgaMovie_v3/edit/main/README.md#imagej-settings).
+7) Your movies (and a log file) will be saved into a subfolder of your input folder called _/_OrgaMovies/_.
+8) If the macro finished running without errors, the last line in the log window should read "Run finished".
 
 
 ## OrgaMovie Settings
