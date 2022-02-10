@@ -21,7 +21,7 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 
 ### External content required before you can run the macro
 There is a bit of external content required for this macro which may or may not be present on your installation of FiJi. After installing any of these, you need to restart FiJi for it to actually work.  
-<img align="right" src=https://user-images.githubusercontent.com/14219087/153417850-0e500496-99b5-48d1-b6ee-7d646df1e794.png width=50%>
+<img align="right" src=https://user-images.githubusercontent.com/14219087/153417850-0e500496-99b5-48d1-b6ee-7d646df1e794.png width=45%>
 
 You can check which (if any) of these are already installed by hitting Ctrl+l or just l (= lowercase L) in FiJi to open the focus search bar and start typing the plugin/extension name. If it's installed, it will be listed in the Commands list on the left. 
 
