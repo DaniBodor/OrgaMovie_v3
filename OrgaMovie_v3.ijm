@@ -5,11 +5,16 @@ colw = 8;
 title_fontsize = 15;
 github = "https://github.com/DaniBodor/OrgaMovie_v3#input-settings";
 
-// load default settings
-defaults_dir = getDirectory("imagej") + "defaults" + File.separator;
-File.makeDirectory(defaults_dir);
-defaults_file = defaults_dir + "OrgaMovie_v3.txt";
-//if(File.exists(defaults_file))		default_inputs = ____PLACEHOLDER____
+// load settings
+settings_dir = getDirectory("macros") + "settings" + File.separator;
+File.makeDirectory(settings_dir);
+settings_file = settings_dir + "OrgaMovie_v3.txt";
+List.clear();
+if(File.exists(settings_file)){
+	raw = File.openAsString(settings_file);
+	List.setList(raw);
+}
+else	default_settings();
 
 // open dialog
 Dialog.create("OrgaMovie Settings");
@@ -18,37 +23,37 @@ Dialog.create("OrgaMovie Settings");
 	Dialog.setInsets(10, 0, 0);
 	Dialog.addMessage("Input/output settings",title_fontsize);
 	Dialog.setInsets(0, 0, -2);
-	Dialog.addString("Input filetype", "nd2", colw-2);
-	Dialog.addNumber("Input channel", 1, 0, colw, "");
-	Dialog.addNumber("Time interval", 3, 0, colw, "min");
-	Dialog.addNumber("Z-step", 2.5, 1, colw, getInfo("micrometer.abbreviation"));
+	Dialog.addString("Input filetype", List.get("input_filetype"), colw-2);
+	Dialog.addNumber("Input channel", List.get("input_channel"), 0, colw, "");
+	Dialog.addNumber("Time interval", List.get("T_step"), 0, colw, "min");
+	Dialog.addNumber("Z-step", List.get("Z_step"), 1, colw, getInfo("micrometer.abbreviation"));
 	output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
-	Dialog.addChoice("Output format", output_options, output_options[0]);
+	Dialog.addChoice("Output format", output_options, List.get("out_format"));
 	Dialog.setInsets(0, 40, 0);
-	Dialog.addCheckbox("Save separate projections", 0);
+	Dialog.addCheckbox("Save separate projections", List.get("saveSinglePRJs"));
 
 	Dialog.setInsets(20, 0, 0);
 	Dialog.addMessage("\nMovie settings",title_fontsize);
 	Dialog.setInsets(0, 0, 0);
-	Dialog.addNumber("Frame rate", 18, 0, colw, "frames / sec");
+	Dialog.addNumber("Frame rate", List.get("framerate"), 0, colw, "frames / sec");
 	Dialog.setInsets(2, 40, -2);
-	Dialog.addCheckbox("Apply drift correction", 1);
+	Dialog.addCheckbox("Apply drift correction", List.get("do_registration"));
 	LUTlist = getList("LUTs");
-	Dialog.addChoice("Depth coding", LUTlist, "Depth Organoid");
-	Dialog.addChoice("Projection LUT", LUTlist, "The Real Glow");
-	Dialog.addNumber("Pixel saturation", 0.1, 2, colw, "%");
-	Dialog.addNumber("Min intensity factor", 1, 1, colw, "");
-	Dialog.addNumber("Crop boundary", 24, 0, colw, "pixels");
-	Dialog.addNumber("Scalebar target width", 20, 0, colw, "% of total width");
+	Dialog.addChoice("Depth coding", LUTlist, List.get("depth_LUT"));
+	Dialog.addChoice("Projection LUT", LUTlist, List.get("prj_LUT"));
+	Dialog.addNumber("Pixel saturation", List.get("satpix"), 2, colw, "%");
+	Dialog.addNumber("Min intensity factor", List.get("minBrightFactor"), 1, colw, "");
+	Dialog.addNumber("Crop boundary", List.get("crop_boundary"), 0, colw, "pixels");
+	Dialog.addNumber("Scalebar target width", List.get("scalebartarget"), 0, colw, "% of total width");
 
 	Dialog.setInsets(20, 0, 0);
 	Dialog.addMessage("ImageJ settings",title_fontsize);
 	Dialog.setInsets(0, 40, 0);
-	Dialog.addCheckbox("Reduce RAM usage", 0);
+	Dialog.addCheckbox("Reduce RAM usage", List.get("reduceRAM"));
 	Dialog.setInsets(0, 40, 0);
-	Dialog.addCheckbox("Print progress duration", 0);
+	Dialog.addCheckbox("Print progress duration", List.get("intermed_times"));
 	//Dialog.setInsets(0, 40, 0);
-	//Dialog.addCheckbox("Run in background (doesn't work yet)", 0);
+	//Dialog.addCheckbox("Run in background (doesn't work yet)", List.get("run_in_bg"));
 	Dialog.setInsets(0, 40, 0);
 	Dialog.addCheckbox("Save these settings for next time?", 0);
 
@@ -84,13 +89,14 @@ Dialog.show();
 	if (List.get("reduceRAM")) chunkSizeLimit = chunkSizeLimit / 2;	// in case someone runs into RAM problems, this should be sufficient
 	List.set("intermed_times", Dialog.getCheckbox());
         intermed_times = List.get("intermed_times");
-	run_in_bg = false;	//apparently buggy; don't understand why. see github issues for info on bug
+	List.set("run_in_bg",0);	//apparently buggy; don't understand why. see github issues for info on bug
+	//List.set("run_in_bg",Dialog.getCheckbox());
 	export_settings = Dialog.getCheckbox();
 
 InputSettings = List.getList;
-if (export_settings)	File.saveString(InputSettings, defaults_file);
+if (export_settings)	File.saveString(InputSettings, settings_file);
 //print(InputSettings);
-crash
+//crash
 //// SETTINGS NOT IN DIALOG
 // visual settings
 min_thresh_meth = "Percentile";
@@ -115,7 +121,7 @@ print("\\Clear");
 run("Close All");
 roiManager("reset");
 fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin
-setBatchMode(run_in_bg);	// bug, see above
+setBatchMode(List.get("run_in_bg"));	// bug, see above
 dumpMemory(3);
 
 // find all images in base directory
@@ -563,8 +569,8 @@ function depthCoding(){
 
 	// run color coding
 	precolorname = getTitle();
-	if (run_in_bg)	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices+" batch");
-	else					run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices);
+	if (List.get("run_in_bg"))	run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices+" batch");
+	else						run("Temporal-Color Code", "lut=["+depth_LUT+"] start=1 end="+slices);
 	rename(tempname_col + precolorname);
 	dumpMemory(3);
 
@@ -783,3 +789,29 @@ function requireLUTs(){
 	}
 }
 
+function default_settings(){
+	List.clear();
+	// input/output settings
+	List.set("input_filetype", "nd2");
+	List.set("input_channel", 1);
+	List.set("T_step", 3);
+	List.set("Z_step", 2.5);
+	List.set("out_format", "*.avi AND *.tif");
+	List.set("saveSinglePRJs", 0);
+	//movie settings
+	List.set("framerate", 18);
+	List.set("do_registration", 1);
+	List.set("depth_LUT", "Depth Organoid");
+	List.set("prj_LUT","The Real Glow");
+	List.set("satpix", 0.1);
+	List.set("minBrightFactor", 1);
+	List.set("crop_boundary", 24);
+	List.set("scalebartarget", 20);
+	//imagej settings
+	List.set("reduceRAM", 0);
+	List.set("intermed_times", 0);
+	List.set("run_in_bg", false);
+
+	InputSettings = List.getList;
+	return InputSettings;
+}
