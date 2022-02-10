@@ -6,10 +6,10 @@ title_fontsize = 15;
 github = "https://github.com/DaniBodor/OrgaMovie_v3#input-settings";
 
 // load default settings
-//defaults_dir = getDirectory("imagej") + "defaults" + File.separator;
-//File.makeDirectory(defaults_dir);
-//defaults_file = defaults_dir + "OrgaMovie_v3.txt";
-//defaults = import_defaults();
+defaults_dir = getDirectory("imagej") + "defaults" + File.separator;
+File.makeDirectory(defaults_dir);
+defaults_file = defaults_dir + "OrgaMovie_v3.txt";
+//if(File.exists(defaults_file))		default_inputs = ____PLACEHOLDER____
 
 // open dialog
 Dialog.create("OrgaMovie Settings");
@@ -49,6 +49,8 @@ Dialog.create("OrgaMovie Settings");
 	Dialog.addCheckbox("Print progress duration", 0);
 	//Dialog.setInsets(0, 40, 0);
 	//Dialog.addCheckbox("Run in background (doesn't work yet)", 0);
+	Dialog.setInsets(0, 40, 0);
+	Dialog.addCheckbox("Save these settings for next time?", 0);
 
 Dialog.show();
 	// move settings from dialog window into a key/value list
@@ -83,10 +85,12 @@ Dialog.show();
 	List.set("intermed_times", Dialog.getCheckbox());
         intermed_times = List.get("intermed_times");
 	run_in_bg = false;	//apparently buggy; don't understand why. see github issues for info on bug
+	export_settings = Dialog.getCheckbox();
 
 InputSettings = List.getList;
+if (export_settings)	File.saveString(InputSettings, defaults_file);
 //print(InputSettings);
-
+crash
 //// SETTINGS NOT IN DIALOG
 // visual settings
 min_thresh_meth = "Percentile";
@@ -778,3 +782,4 @@ function requireLUTs(){
 		exit("restart FiJi after installing LUTs");
 	}
 }
+
