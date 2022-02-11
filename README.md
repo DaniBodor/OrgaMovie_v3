@@ -12,16 +12,18 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 ## How to install OrgaMovie
 1) [Download](https://github.com/DaniBodor/OrgaMovie_v3/archive/refs/heads/main.zip) this repository by clicking on the link or on the green 'Code' button above and 'Download ZIP' (or use git pull).
 2) Extract your zip file
-3) Start FIJI and go to _Plugins>Install..._ &nbsp;&nbsp;&nbsp; <img align="middle" src="https://user-images.githubusercontent.com/14219087/153043733-e1f90753-01e7-4e4d-b06d-753f97aff7df.png" width=40%>
+3) Start FIJI and go to _Plugins>Install..._  
+    <img src="https://user-images.githubusercontent.com/14219087/153043733-e1f90753-01e7-4e4d-b06d-753f97aff7df.png" width=40%>
 
 4) Select OrgaMovie_v3.ijm from the location you downloaded and unzipped to and save it into you _.../fiji.app/plugins/Analyze/_ folder (or some other location you prefer)  
-5) Restart FiJi and it will show up in your _Plugins>Analyze_ menu &nbsp;&nbsp;&nbsp; <img align="middle" src="https://user-images.githubusercontent.com/14219087/153418840-670b5e3f-fd1d-460c-aec6-d1b5f5a96feb.png" width=50%>
+5) Restart FiJi and it will show up in your _Plugins>Analyze_ menu  
+    <img align="middle" src="https://user-images.githubusercontent.com/14219087/153418840-670b5e3f-fd1d-460c-aec6-d1b5f5a96feb.png" width=50%>
 
 [//]: # (https://user-images.githubusercontent.com/14219087/153043552-0d984d64-351b-4f12-bb03-4bdc5b87dfa5.png = prewvious version of image)
 
 ### External content required before you can run the macro
 There is a bit of external content required for this macro which may or may not be present on your installation of FiJi. After installing any of these, you need to restart FiJi for it to actually work.  
-<img align="right" src=https://user-images.githubusercontent.com/14219087/153417850-0e500496-99b5-48d1-b6ee-7d646df1e794.png width=40%>
+<img align="right" src=https://user-images.githubusercontent.com/14219087/153417850-0e500496-99b5-48d1-b6ee-7d646df1e794.png width=45%>
 
 You can check which (if any) of these are already installed by hitting Ctrl+l or just l (= lowercase L) in FiJi to open the focus search bar and start typing the plugin/extension name. If it's installed, it will be listed in the Commands list on the left. 
 
@@ -36,8 +38,8 @@ You can check which (if any) of these are already installed by hitting Ctrl+l or
 
 
 ## Running the macro
-1) Put all the raw data you want to process into your input folder (images can be any size and any format that FiJi can handle).
-2) Make sure you have no unsaved stuff open in FiJi as all open images/measurements/ROI lists/etc will be closed or overwritten without without saving.
+1) Make sure you have no unsaved stuff open in FiJi, as all open images/results/ROIs/Logs/etc will be closed or overwritten without without saving.
+2) Put all the raw data you want to process into your input folder (images can be any size and any format that FiJi can handle).
 3) Select _OrgaMovie_v3_ from wherever you installed it (or [create a shortcut](https://imagej.net/learn/keyboard-shortcuts) for it).
 4) Choose your settings (see below for explanation), hit _OK_.
 5) Choose your input folder, hit _Select_.
