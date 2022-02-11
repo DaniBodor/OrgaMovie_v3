@@ -785,13 +785,13 @@ function fixTemporalColorCode(){
 	// fixes a bug in the Temporal Color Code plugin
 	plugindir = getDirectory("plugins");
 	path = plugindir + "Scripts\\Image\\Hyperstacks\\Temporal-Color_Code.ijm";
-	TCCcode = File.openAsString(path);
+	TCC_code = File.openAsString(path);
 	
-	oldline = "lutA =";
-	newline = "lutA = getList(\"LUTs\"); //";
-	newcode = TCCcode.replace(oldline,newline);
+	oldline = "lutA = makeLUTsArray";
+	newline = "lutA = getList(\"LUTs\"); //makeLUTsArray";
+	newTCC = TCC_code.replace(oldline,newline);
 	
-	File.saveString(newcode, path);
+	File.saveString(newTCC, path);
 }
 
 
