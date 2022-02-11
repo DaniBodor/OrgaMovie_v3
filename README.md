@@ -49,19 +49,20 @@ You can check which (if any) of these are already installed by hitting Ctrl+l or
 8) If the macro finished running without errors, the last line in the log window should read "Run finished".
 
 
+
 ## OrgaMovie Settings
-<img align="right" src="https://user-images.githubusercontent.com/14219087/153222072-d41836bb-7be9-48bc-8043-5a2ba8a209f6.png" width=25%>
+Your settings will always be at the top of your experiment log, so you can always find back which settings you used in any run.
+<img align="right" src="https://user-images.githubusercontent.com/14219087/153618487-913027b4-38fa-413d-99bb-2c2fbfe7adbd.png" width=25%>
 
 ### Input/output settings
 - Input filetype: write the extension of the filetype you want to use (so that all files in the input folder with a different extension are ignored).
 - Input channel: set the channel to use in terms of channel order (so N<sup>th</sup> channel).
     - Can be ignored if single-channel (i.e. single-color) data is used.
-    - Because false colors are used to signify depth, it is unclear how to implement multi-channel depth in this macro. Talk to me if you are interested in this to see if we can figure something out.
 - Time interval: set the interval (in minutes) between consecutive frames. This is used in the time-stamp of the movie.
 - Z-step: set the axial step size (in microns). This is used for the color-bar legend.
 - Output format: Choose whether output videos should be in between _\*.avi_ or _\*.tif_ or both.
     - TIFs are easier to use for downstream analysis in ImageJ but require significantly more diskspace than AVIs (~25-50x larger files).
-- Save intermediates: if this is checked, then the depth and max projections are also saved as separate \*.tifs without any legend, etc
+- Save separate projections: if this is checked, then the depth and max projections are also saved as separate \*.tifs without any legend, etc (for easy editing in FiJi)
 
 ### Movie settings
 - Frame rate: The frame rate of the output movie (for _\*.avi_). Set how many seconds each frame stays in view when playing the movie.
@@ -76,4 +77,8 @@ You can check which (if any) of these are already installed by hitting Ctrl+l or
 ### ImageJ settings
 - Reduce RAM usage: The macro automatically detects how much RAM is available to FiJi and adjusts the maximum filesize based on this. This should work fine most of the time. Just in case you are having memory issues (or are using a lot of other heavy programs), tick this to halve the RAM used by this macro. If this is still too much, then either close some programs or adjust the memory available to ImageJ in the _"Edit>Options>Memory & Threads..."_ menu. (If ImageJ exceeds the available memory, it usually (but not always) gives a warning that this is the case).
 - Print progress duration: if checked, the log will output which process of the macro took how long. This can be useful when working with large files if you want to know whether the macro is stuck or not.
+- Save these settings for next time: If checked, the current settings will be stored and automatically loaded next time you run the macro.
+    - Remember that your previous settings will be stored in the log from that run so that you don't loose them.
+- Load defaults: If checked, the default settings (as in image above) are reloaded. After hitting OK, the dialog window will re-appear and you can still make changes.
+    - Note that this will override the 'save settings' from above.
 
