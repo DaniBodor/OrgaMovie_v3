@@ -4,7 +4,8 @@
 
 This FiJi/ImageJ macro takes any number 4D (xyzt) _\*.nd2_ image files of organoids and creates color-coded (for depth) time-lapse movies (see example below).  
 
-https://user-images.githubusercontent.com/14219087/153039727-4fde4888-3540-4628-b33b-7446a5222de4.mov  
+https://user-images.githubusercontent.com/14219087/153618145-6f403f22-9c2a-4beb-8de5-55ab82c4a644.mp4
+
 
 This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) previously created by Bas Ponsioen and René Overmeer, first published in _[Targeting mutant RAS in patient-derived colorectal cancer organoids by combinatorial drug screening](https://elifesciences.org/articles/18489)_, (eLife 2016;5:e18489 doi: 10.7554/eLife.18489).
 
