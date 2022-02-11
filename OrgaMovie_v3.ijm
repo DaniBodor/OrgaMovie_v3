@@ -1,10 +1,6 @@
 requires("1.53f");	// for Array.filter()
 requireLUTs();	// checks if relevant LUTs are available
 
-colw = 8;
-title_fontsize = 15;
-github = "https://github.com/DaniBodor/OrgaMovie_v3#input-settings";
-
 // load settings
 settings_dir = getDirectory("macros") + "settings" + File.separator;
 File.makeDirectory(settings_dir);
@@ -16,87 +12,112 @@ if(File.exists(settings_file)){
 }
 else	default_settings();
 
+// dialog settings/layout
+showdialogwindow = 1;
+colw = 8;
+title_fontsize = 15;
+github = "https://github.com/DaniBodor/OrgaMovie_v3#input-settings";
+LUTlist = getList("LUTs");
+output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
+print("\\Clear");
+
 // open dialog
-Dialog.create("OrgaMovie Settings");
-	Dialog.addHelp(github);
+while (showdialogwindow > 0) {
+	Dialog.createNonBlocking("OrgaMovie Settings");
+		Dialog.addHelp(github);
+		
+		Dialog.setInsets(10, 0, 0);
+		Dialog.addMessage("Input/output settings",title_fontsize);
+		Dialog.setInsets(0, 0, -2);
+		Dialog.addString("Input extension", List.get("extension"), colw-2);
+		Dialog.addNumber("Input channel", List.get("input_channel"), 0, colw, "");
+		Dialog.addNumber("Time interval", List.get("T_step"), 0, colw, "min");
+		Dialog.addNumber("Z-step", List.get("Z_step"), 1, colw, getInfo("micrometer.abbreviation"));
+		Dialog.addChoice("Output format", output_options, List.get("out_format"));
+		Dialog.setInsets(0, 40, 0);
+		Dialog.addCheckbox("Save separate projections", List.get("saveSinglePRJs"));
 	
-	Dialog.setInsets(10, 0, 0);
-	Dialog.addMessage("Input/output settings",title_fontsize);
-	Dialog.setInsets(0, 0, -2);
-	Dialog.addString("Input filetype", List.get("input_filetype"), colw-2);
-	Dialog.addNumber("Input channel", List.get("input_channel"), 0, colw, "");
-	Dialog.addNumber("Time interval", List.get("T_step"), 0, colw, "min");
-	Dialog.addNumber("Z-step", List.get("Z_step"), 1, colw, getInfo("micrometer.abbreviation"));
-	output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
-	Dialog.addChoice("Output format", output_options, List.get("out_format"));
-	Dialog.setInsets(0, 40, 0);
-	Dialog.addCheckbox("Save separate projections", List.get("saveSinglePRJs"));
-
-	Dialog.setInsets(20, 0, 0);
-	Dialog.addMessage("\nMovie settings",title_fontsize);
-	Dialog.setInsets(0, 0, 0);
-	Dialog.addNumber("Frame rate", List.get("framerate"), 0, colw, "frames / sec");
-	Dialog.setInsets(2, 40, -2);
-	Dialog.addCheckbox("Apply drift correction", List.get("do_registration"));
-	LUTlist = getList("LUTs");
-	Dialog.addChoice("Depth coding", LUTlist, List.get("depth_LUT"));
-	Dialog.addChoice("Projection LUT", LUTlist, List.get("prj_LUT"));
-	Dialog.addNumber("Pixel saturation", List.get("satpix"), 2, colw, "%");
-	Dialog.addNumber("Min intensity factor", List.get("minBrightFactor"), 1, colw, "");
-	Dialog.addNumber("Crop boundary", List.get("crop_boundary"), 0, colw, "pixels");
-	Dialog.addNumber("Scalebar target width", List.get("scalebartarget"), 0, colw, "% of total width");
-
-	Dialog.setInsets(20, 0, 0);
-	Dialog.addMessage("ImageJ settings",title_fontsize);
-	Dialog.setInsets(0, 40, 0);
-	Dialog.addCheckbox("Reduce RAM usage", List.get("reduceRAM"));
-	Dialog.setInsets(0, 40, 0);
-	Dialog.addCheckbox("Print progress duration", List.get("intermed_times"));
-	//Dialog.setInsets(0, 40, 0);
-	//Dialog.addCheckbox("Run in background (doesn't work yet)", List.get("run_in_bg"));
-	Dialog.setInsets(0, 40, 0);
-	Dialog.addCheckbox("Save these settings for next time?", 0);
-
-Dialog.show();
-	// move settings from dialog window into a key/value list
-	List.clear();
+		Dialog.setInsets(20, 0, 0);
+		Dialog.addMessage("\nMovie settings",title_fontsize);
+		Dialog.setInsets(0, 0, 0);
+		Dialog.addNumber("Frame rate", List.get("framerate"), 0, colw, "frames / sec");
+		Dialog.setInsets(2, 40, -2);
+		if (showdialogwindow == 1)	Dialog.addCheckbox("Apply drift correction", List.get("driftcorrect"));
+		else						Dialog.addCheckbox("Apply_drift correction", List.get("driftcorrect"));	// fixes weird bug that I don't understand
+		Dialog.addChoice("Depth coding", LUTlist, List.get("depth_LUT"));
+		Dialog.addChoice("Projection LUT", LUTlist, List.get("prj_LUT"));
+		Dialog.addNumber("Pixel saturation", List.get("satpix"), 2, colw, "%");
+		Dialog.addNumber("Min intensity factor", List.get("minBrightFactor"), 1, colw, "");
+		Dialog.addNumber("Crop boundary", List.get("crop_boundary"), 0, colw, "pixels");
+		Dialog.addNumber("Scalebar target width", List.get("scalebartarget"), 0, colw, "% of total width");
 	
-	// input/output settings
-	List.set("input_filetype", Dialog.getString());
-	List.set("input_channel", Dialog.getNumber());
-	List.set("T_step", Dialog.getNumber());
-	List.set("Z_step", Dialog.getNumber());
-	List.set("out_format", Dialog.getChoice());
-	List.set("saveSinglePRJs", Dialog.getCheckbox());
+		Dialog.setInsets(20, 0, 0);
+		Dialog.addMessage("ImageJ settings",title_fontsize);
+		Dialog.setInsets(0, 40, 0);
+		Dialog.addCheckbox("Reduce RAM usage", List.get("reduceRAM"));
+		Dialog.setInsets(0, 40, 0);
+		Dialog.addCheckbox("Print progress duration", List.get("intermed_times"));
+		//Dialog.setInsets(0, 40, 0);
+		//Dialog.addCheckbox("Run in background (doesn't work yet)", List.get("run_in_bg"));
+		Dialog.setInsets(0, 40, 0);
+		Dialog.addCheckbox("Save these settings for next time", 0);
+		Dialog.setInsets(0, 40, 0);
+		if (showdialogwindow == 1)	Dialog.addCheckbox("Load defaults (will show this windown again)", 0);
 	
-	//movie settings
-	List.set("framerate", Dialog.getNumber());
-	List.set("do_registration", Dialog.getCheckbox());
-        do_registration = List.get("do_registration");
-	List.set("depth_LUT", Dialog.getChoice());
-        depth_LUT = List.get("depth_LUT");
-	List.set("prj_LUT", Dialog.getChoice());
-        prj_LUT = List.get("prj_LUT");
-	List.set("satpix", Dialog.getNumber());
-	List.set("minBrightFactor", Dialog.getNumber());
-	List.set("crop_boundary", Dialog.getNumber());
-	List.set("scalebartarget", Dialog.getNumber());	// proportion of image width best matching scale bar width
+	Dialog.show();
+		// move settings from dialog window into a key/value list
+		List.clear();
 
-	//imagej settings
-	List.set("reduceRAM", Dialog.getCheckbox());
-	IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
-	chunkSizeLimit = IJmem/4;						// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
-	if (List.get("reduceRAM")) chunkSizeLimit = chunkSizeLimit / 2;	// in case someone runs into RAM problems, this should be sufficient
-	List.set("intermed_times", Dialog.getCheckbox());
-        intermed_times = List.get("intermed_times");
-	List.set("run_in_bg",0);	//apparently buggy; don't understand why. see github issues for info on bug
-	//List.set("run_in_bg",Dialog.getCheckbox());
-	export_settings = Dialog.getCheckbox();
+		// input/output settings
+		List.set("extension", Dialog.getString());
+		List.set("input_channel", Dialog.getNumber());
+		List.set("T_step", Dialog.getNumber());
+		List.set("Z_step", Dialog.getNumber());
+		List.set("out_format", Dialog.getChoice());
+		List.set("saveSinglePRJs", Dialog.getCheckbox());
 
+		//movie settings
+		List.set("framerate", Dialog.getNumber());
+		List.set("driftcorrect", Dialog.getCheckbox());
+		List.set("depth_LUT", Dialog.getChoice());
+		List.set("prj_LUT", Dialog.getChoice());
+		List.set("satpix", Dialog.getNumber());
+		List.set("minBrightFactor", Dialog.getNumber());
+		List.set("crop_boundary", Dialog.getNumber());
+		List.set("scalebartarget", Dialog.getNumber());	// proportion of image width best matching scale bar width
+
+		//imagej settings
+		List.set("reduceRAM", Dialog.getCheckbox());
+		List.set("intermed_times", Dialog.getCheckbox());
+		List.set("run_in_bg",0);	//buggy; don't understand why. see github issues for info on bug
+		//List.set("run_in_bg",Dialog.getCheckbox());
+		
+		// the following 2 settings are not exported
+		export_settings = Dialog.getCheckbox();	
+		if (showdialogwindow == 1){
+			if (Dialog.getCheckbox() ){
+				default_settings();
+				showdialogwindow = 2;
+			}
+			else showdialogwindow = 0;
+		}
+		else showdialogwindow = 0;
+}
+
+// handle dialog settings
 InputSettings = List.getList;
 if (export_settings)	File.saveString(InputSettings, settings_file);
-//print(InputSettings);
-//crash
+
+do_registration = List.get("driftcorrect");
+depth_LUT = List.get("depth_LUT");
+prj_LUT = List.get("prj_LUT");
+intermed_times = List.get("intermed_times");
+
+IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
+chunkSizeLimit = IJmem/4;						// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
+if (List.get("reduceRAM")) chunkSizeLimit = chunkSizeLimit / 2;	// in case someone runs into RAM problems, this should be sufficient
+
+
 //// SETTINGS NOT IN DIALOG
 // visual settings
 min_thresh_meth = "Percentile";
@@ -127,7 +148,7 @@ dumpMemory(3);
 // find all images in base directory
 dir = getDirectory("Choose directory with images to process");
 list = getFileList(dir);
-im_list = Array.filter(list,"." + List.get("input_filetype"));
+im_list = Array.filter(list,"." + List.get("extension"));
 
 // prep output folders
 outdir = dir + outdirname + File.separator;
@@ -135,7 +156,7 @@ if (im_list.length > 0) File.makeDirectory(outdir);
 else	{
 	printDateTime("");
 	print("***MACRO ABORTED***");
-	print("no files with extension:",List.get("input_filetype"));
+	print("no files with extension:",List.get("extension"));
 	print("were found in: "+dir);
 	exit(getInfo("log"));
 }
@@ -792,7 +813,7 @@ function requireLUTs(){
 function default_settings(){
 	List.clear();
 	// input/output settings
-	List.set("input_filetype", "nd2");
+	List.set("extension", "nd2");
 	List.set("input_channel", 1);
 	List.set("T_step", 3);
 	List.set("Z_step", 2.5);
@@ -800,7 +821,7 @@ function default_settings(){
 	List.set("saveSinglePRJs", 0);
 	//movie settings
 	List.set("framerate", 18);
-	List.set("do_registration", 1);
+	List.set("driftcorrect", 1);
 	List.set("depth_LUT", "Depth Organoid");
 	List.set("prj_LUT","The Real Glow");
 	List.set("satpix", 0.1);
