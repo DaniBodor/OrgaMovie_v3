@@ -22,14 +22,14 @@ output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
 print("\\Clear");
 
 // open dialog
-while (showdialogwindow > 0) {
+while (showdialogwindow) {
 	Dialog.createNonBlocking("OrgaMovie Settings");
 		Dialog.addHelp(github);
 		
 		Dialog.setInsets(10, 0, 0);
 		Dialog.addMessage("Input/output settings",title_fontsize);
 		Dialog.setInsets(0, 0, -2);
-		Dialog.addString("Input extension", List.get("extension"), colw-2);
+		Dialog.addString("Input filetype", List.get("extension"), colw-2);
 		Dialog.addNumber("Input channel", List.get("input_channel"), 0, colw, "");
 		Dialog.addNumber("Time interval", List.get("T_step"), 0, colw, "min");
 		Dialog.addNumber("Z-step", List.get("Z_step"), 1, colw, getInfo("micrometer.abbreviation"));
@@ -42,8 +42,7 @@ while (showdialogwindow > 0) {
 		Dialog.setInsets(0, 0, 0);
 		Dialog.addNumber("Frame rate", List.get("framerate"), 0, colw, "frames / sec");
 		Dialog.setInsets(2, 40, -2);
-		if (showdialogwindow == 1)	Dialog.addCheckbox("Apply drift correction", List.get("driftcorrect"));
-		else						Dialog.addCheckbox("Apply_drift correction", List.get("driftcorrect"));	// fixes weird bug that I don't understand
+		Dialog.addCheckbox("Apply drift correction", List.get("driftcorrect"));
 		Dialog.addChoice("Depth coding", LUTlist, List.get("depth_LUT"));
 		Dialog.addChoice("Projection LUT", LUTlist, List.get("prj_LUT"));
 		Dialog.addNumber("Pixel saturation", List.get("satpix"), 2, colw, "%");
@@ -62,7 +61,7 @@ while (showdialogwindow > 0) {
 		Dialog.setInsets(0, 40, 0);
 		Dialog.addCheckbox("Save these settings for next time", 0);
 		Dialog.setInsets(0, 40, 0);
-		if (showdialogwindow == 1)	Dialog.addCheckbox("Load defaults (will show this windown again)", 0);
+		if (showdialogwindow)	Dialog.addCheckbox("Load defaults (will show this windown again)", 0);
 	
 	Dialog.show();
 		// move settings from dialog window into a key/value list
@@ -93,14 +92,8 @@ while (showdialogwindow > 0) {
 		//List.set("run_in_bg",Dialog.getCheckbox());
 		
 		// the following 2 settings are not exported
-		export_settings = Dialog.getCheckbox();	
-		if (showdialogwindow == 1){
-			if (Dialog.getCheckbox() ){
-				default_settings();
-				showdialogwindow = 2;
-			}
-			else showdialogwindow = 0;
-		}
+		export_settings = Dialog.getCheckbox();
+		if (Dialog.getCheckbox() )	default_settings();
 		else showdialogwindow = 0;
 }
 
