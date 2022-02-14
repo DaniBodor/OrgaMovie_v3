@@ -16,9 +16,9 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 3) Start FIJI and go to _Plugins>Install..._  
     <img src="https://user-images.githubusercontent.com/14219087/153043733-e1f90753-01e7-4e4d-b06d-753f97aff7df.png" width=40%>
 
-4) Select OrgaMovie_v3.ijm from the location you downloaded and unzipped to and save it into you _.../fiji.app/plugins/Analyze/_ folder (or some other location you prefer)  
-5) Restart FiJi and it will show up in your _Plugins>Analyze_ menu  
-    <img align="middle" src="https://user-images.githubusercontent.com/14219087/153418840-670b5e3f-fd1d-460c-aec6-d1b5f5a96feb.png" width=50%>
+4) Select OrgaMovie_v3.ijm from the location you downloaded and unzipped to and save it into you _.../fiji.app/plugins/Scripts/Image/Hyperstacks/_ folder (or some other location you prefer)  
+5) Restart FiJi and it will show up in your Image>Hyperstacks menu (or whatever other location you chose)  
+    <img align="middle" src="https://user-images.githubusercontent.com/14219087/153886279-068b4ebf-1fbd-413e-bb91-364a03c67622.png" width=40%>
 
 [//]: # (https://user-images.githubusercontent.com/14219087/153043552-0d984d64-351b-4f12-bb03-4bdc5b87dfa5.png = prewvious version of image)
 
