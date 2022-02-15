@@ -777,7 +777,7 @@ function dumpMemory(n){
 function fixTemporalColorCode(){
 	// fixes a bug in the Temporal Color Code plugin
 	plugindir = getDirectory("plugins");
-	path = plugindir + "Scripts\\Image\\Hyperstacks\\Temporal-Color_Code.ijm";
+	path = plugindir + "Scripts" + File.separator + "Image" + File.separator + "Hyperstacks" + File.separator + "Temporal-Color_Code.ijm";
 	TCC_code = File.openAsString(path);
 	
 	oldline = "lutA = makeLUTsArray";
