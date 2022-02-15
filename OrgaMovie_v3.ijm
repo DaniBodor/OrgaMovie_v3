@@ -803,6 +803,7 @@ function requireLUTs(){
 	}
 }
 
+
 function default_settings(){
 	List.clear();
 	// input/output settings
