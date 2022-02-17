@@ -16,9 +16,9 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 3) Start FIJI and go to _Plugins>Install..._  
     <img src="https://user-images.githubusercontent.com/14219087/153043733-e1f90753-01e7-4e4d-b06d-753f97aff7df.png" width=40%>
 
-4) Select OrgaMovie_v3.ijm from the location you downloaded and unzipped to and save it into you _.../fiji.app/plugins/Scripts/Image/Hyperstacks/_ folder (or some other location you prefer)  
-5) Restart FiJi and it will show up in your Image>Hyperstacks menu (or whatever other location you chose)  
-    <img align="middle" src="https://user-images.githubusercontent.com/14219087/153886279-068b4ebf-1fbd-413e-bb91-364a03c67622.png" width=40%>
+4) Select OrgaMovie_v3.ijm from the location you downloaded and unzipped to and save it into you _.../fiji.app/plugins/Analyze/_ folder (or some other location you prefer)  
+5) Restart FiJi and it will show up in your _Plugins>Analyze_ menu  
+    <img align="middle" src="https://user-images.githubusercontent.com/14219087/153418840-670b5e3f-fd1d-460c-aec6-d1b5f5a96feb.png" width=50%>
 
 [//]: # (https://user-images.githubusercontent.com/14219087/153043552-0d984d64-351b-4f12-bb03-4bdc5b87dfa5.png = prewvious version of image)
 
@@ -46,7 +46,7 @@ You can check which (if any) of these are already installed by hitting Ctrl+l or
     - If you have the macro recorder open, an error message might pop up at this point. You can safely ignore this error and the macro will run just fine, or you can close the recorder to avoid the error appearing.
 5) Choose your input folder, hit _Select_.
 6) Depending on the size of the files, the macro can take a while to run. At some stages it might seem like nothing is happening, but you can usually see whether it is still running by checking the log window (which states what is currently happening) and/or the status bar of FiJi (i.e. below the clickable icons). To get a better idea of whether it's stuck or not, consider turning on "Print progress duration" in the [Settings](https://github.com/DaniBodor/OrgaMovie_v3/edit/main/README.md#imagej-settings).
-7) Your movies (and a log file) will be saved into a subfolder of your input folder called _/_OrgaMovies/_.
+7) Your movies (and a log file) will be saved into a subfolder of your input folder called __OrgaMovies_.
 8) If the macro finished running without errors, the last line in the log window should read "Run finished".
 
 
