@@ -61,7 +61,7 @@ while (showdialogwindow) {
 		Dialog.setInsets(0, 40, 0);
 		Dialog.addCheckbox("Save these settings for next time", 0);
 		Dialog.setInsets(0, 40, 0);
-		if (showdialogwindow)	Dialog.addCheckbox("Load defaults (will show this windown again)", 0);
+		if (showdialogwindow)	Dialog.addCheckbox("Load defaults (will show this window again)", 0);
 	
 	Dialog.show();
 		// move settings from dialog window into a key/value list
