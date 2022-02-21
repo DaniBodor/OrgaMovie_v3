@@ -1,6 +1,10 @@
 requires("1.53f");	// for Array.filter()
 requireLUTs();	// checks if relevant LUTs are available
 
+doPreliminaries();
+
+
+//// USER SELECTED SETTINGS
 //get macro settings from dialog
 fetchSettings();
 InputSettings = List.getList;
@@ -10,12 +14,14 @@ do_registration = List.get("driftcorrect");
 depth_LUT = List.get("depth_LUT");
 prj_LUT = List.get("prj_LUT");
 intermed_times = List.get("intermed_times");
+setBatchMode(List.get("run_in_bg"));	// buggy, always off
 
 // memory allocation & BatchMode
 IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
 chunkSizeLimit = IJmem/4;						// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
 if (List.get("reduceRAM")) chunkSizeLimit = chunkSizeLimit / 2;	// in case someone runs into RAM problems, this should be sufficient
-setBatchMode(List.get("run_in_bg"));	// buggy, always off
+print("size limit for 16-bit images is", round(chunkSizeLimit*10)/10, "GB");
+
 
 //// SETTINGS NOT IN DIALOG
 // visual settings
@@ -33,21 +39,13 @@ setFont("SansSerif", fontsize, "antialiased");
 scalebarOptions = newArray(1, 2, 5, 7.5, 10, 15, 20, 25, 40, 50, 60, 75, 100, 125, 150, 200, 250, 500, 750, 1000, 1500, 2000); /// in microns
 
 
-////////////////////////////////////////////// START MACRO //////////////////////////////
-
-// preliminaries
-print("\\Clear");
-run("Close All");
-roiManager("reset");
-dumpMemory(3);
-fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin (might be obsolete after FiJi update, but has no negative effect)
-
-// find all images in base directory
+///	INPUT/OUTPUT
+// select input
 dir = getDirectory("Choose directory with images to process");
 list = getFileList(dir);
 im_list = Array.filter(list,"." + List.get("extension"));
 
-// prep output folders
+// prep output folder
 outdir = dir + outdirname + File.separator;
 if (im_list.length > 0) File.makeDirectory(outdir);
 else	{
@@ -58,16 +56,14 @@ else	{
 	exit(getInfo("log"));
 }
 
-// start running on all images
-printDateTime("running OrgaMovie macro on: "+ dir);
-print("Input settings from dialog:");
-print(" ",InputSettings.replace("\n","\n  "));	// kinda funky way to make it print all the settings with 2 spacess before
+
+////////////////////////////////////////////// START MACRO //////////////////////////////
+
 print("____________________________");
-print("size limit for 16-bit images is", round(chunkSizeLimit*10)/10, "GB");
-print("");
+printDateTime("running OrgaMovie macro on: "+ dir);
+print("____________________________");
 
 for (im = 0; im < im_list.length; im++) {
-
 	// image preliminaries
 	dumpMemory(3);
 	start = getTime();
@@ -829,5 +825,29 @@ function fetchSettings(){
 			if (Dialog.getCheckbox() )	default_settings();
 			else showdialogwindow = 0;
 	}
+	InputSettings = List.getList;
 	if (export_settings)	File.saveString(InputSettings, settings_file);
+
+	//print settings
+	print("Input settings from dialog:");
+	print(" ",InputSettings.replace("\n","\n  "));	// kinda funky way to make it print all the settings with 2 spacess before
+
+}
+
+
+function doPreliminaries(){
+	A = nImages;
+	B = roiManager("count");
+	C = nResults;
+	D = getInfo("log");
+	if (A+B+C>0 && D!="")	waitForUser("Close all without saving?", "All open images, ROI lists, results, log text, etc will be closed without saving.\n\n"+
+								"Click OK to continue.");
+
+	// preliminaries
+	print("\\Clear");
+	run("Close All");
+	roiManager("reset");
+	dumpMemory(3);
+	fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin (might be obsolete after FiJi update, but has no negative effect)
+	
 }
