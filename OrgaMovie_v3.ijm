@@ -40,7 +40,7 @@ print("\\Clear");
 run("Close All");
 roiManager("reset");
 dumpMemory(3);
-fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin
+fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin (might be obsolete after FiJi update, but has no negative effect)
 
 // find all images in base directory
 dir = getDirectory("Choose directory with images to process");
@@ -801,7 +801,7 @@ function fetchSettings(){
 			List.clear();
 	
 			// input/output settings
-			List.set("extension", Dialog.getString());
+			List.set("extension", replace(Dialog.getString(),".",""));
 			List.set("input_channel", Dialog.getNumber());
 			List.set("T_step", Dialog.getNumber());
 			List.set("Z_step", Dialog.getNumber());
