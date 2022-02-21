@@ -1,11 +1,14 @@
+//requirements
 requires("1.53f");	// for Array.filter()
 requireLUTs();	// checks if relevant LUTs are available
 
-doPreliminaries();
+// preliminaries
+closeWindows();
+fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin (might be obsolete after FiJi update, but has no negative effect)
 
 
-//// USER SELECTED SETTINGS
-//get macro settings from dialog
+//// SELECT SETTINGS
+//get settings from dialog
 fetchSettings();
 InputSettings = List.getList;
 
@@ -81,7 +84,7 @@ for (im = 0; im < im_list.length; im++) {
 	
 	if (nImageParts > 1)	print("image is too large to process at once and will be processed in", nImageParts, "parts instead");
 
-	// open chunks one by one
+	// PROCESS IMAGE CHUNKS
 	for (ch = 0; ch < nImageParts; ch++) {
 		if (nImageParts > 1)	print("____ now processing part",ch+1,"of",nImageParts,"____");
 		run("Close All");	//backup in case something remained open by accident; avoids bugs
@@ -93,8 +96,8 @@ for (im = 0; im < im_list.length; im++) {
 		run("Bio-Formats Importer", "open=["+impath+"] t_begin="+t_begin+" t_end="+t_end+" t_step=1" +
 					" c_begin="+List.get("input_channel")+" c_end="+List.get("input_channel")+" c_step=1"+
 					" autoscale color_mode=Grayscale specify_range view=Hyperstack stack_order=XYCZT");
-		// if (!checkHyperstack())	close();		// decide whether/where/how to use this...
 
+		// get chunk info
 		if (nImageParts > 1)	rename(outname_base + "_" + IJ.pad(t_begin,4) + "-" + IJ.pad(t_end,4));
 		ori = getTitle();
 		getPixelSize(pix_unit, pixelWidth, pixelHeight);
@@ -107,9 +110,9 @@ for (im = 0; im < im_list.length; im++) {
 		rename(tempname_max+ori);
 		prj = getTitle();
 
-		// find B&C (on first chunk, then maintain)
+		// find B&C (on first chunk, then maintain throughout)
 		if (ch == 0){
-			print("find brightness & contrast settings");
+			print("\\Update:making projection + finding brightness & contrast settings");
 			setBC();
 			getMinAndMax(minBrightness, maxBrightness);
 		}
@@ -134,25 +137,26 @@ for (im = 0; im < im_list.length; im++) {
 		if (intermed_times)	before = printTime(before);
 	}
 
-	// Assemble individual sub-projections into nice movie
+
+	// ASSEMBLE ALL CHUNKS INTO FINAL OUTPUT
 	
-	// Open MAX projections
+	// open MAX projections
 	print("re-opening all max projections");
 	run("Image Sequence...", "select=["+outdir+"] dir=["+outdir+"] type=16-bit filter="+tempname_max+" sort");
 	rename("PRJMAX");
 	prj_concat = getTitle();
 	deleteIntermediates(tempname_max, outdir);
-	if (intermed_times)	before = printTime(before);
 
 	// crop around signal and save projection
 	print("  first crop and registration");
 	findSignalSpace(List.get("crop_boundary"));
 	roiManager("select", roiManager("count")-1);
 	run("Crop");
+	if (intermed_times)	before = printTime(before);
 	
 	// create registration file for drift correction
 	if (do_registration){
-		print("  create registration file");
+		print("create registration file");
 		selectImage(prj_concat);
 		setSlice(nSlices/2);
 		TransMatrix_File = outdir + outname_base + "_TrMatrix.txt";
@@ -178,8 +182,8 @@ for (im = 0; im < im_list.length; im++) {
 		if (intermed_times)	before = printTime(before);
 	}
 
-	// find final crop
-	print("process separate projections");
+	// find final crop reagion
+	print("process separate images");
 	selectImage(prj_concat);
 	if (do_registration)	findSignalSpace(List.get("crop_boundary"));
 	else {
@@ -191,12 +195,14 @@ for (im = 0; im < im_list.length; im++) {
 	outputArray = newArray(prj_concat, rgb_concat);
 	for (x = 0; x < outputArray.length; x++) {
 		selectImage(outputArray[x]);
+		
 		// crop image
 		roiManager("select", roiManager("count")-1);
 		run("Crop");
 		run("Remove Overlay");	// fix for overlay box in RGB (obsolete?)
 		run("Select None");
 		
+		// save image
 		if (List.get("saveSinglePRJs")){
 			saveAs("Tiff", outdir + outname_base + "_" + getTitle());
 			rename(outputArray[x]);	// fixes renaming after saving
@@ -213,31 +219,36 @@ for (im = 0; im < im_list.length; im++) {
 	print("assemble into OrgaMovie");
 	fuseImages();
 	savename = outdir + outname_base + "_OrgaMovie";
-	
-	//output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
+		//output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");	// TO SEE FORMAT OF OUTPUT_OPTIONS
 	if (List.get("out_format") != output_options[1])
 		saveAs("Tiff", savename);
-	if (List.get("out_format") != output_options[2])	
+	if (List.get("out_format") != output_options[2])
 		run("AVI... ", "compression=JPEG frame="+List.get("framerate")+" save=[" + savename + ".avi]");
-	
-	roiManager("reset");
 	if (intermed_times)	before = printTime(before);
 
-	printDateTime("Finished processing "+im_name);
-	time = round((getTime() - start)/1000);
-	timeformat = d2s(floor(time/60),0) + ":" + IJ.pad(time%60,2);
-	if (intermed_times)		print("    image took",timeformat,"min to process");
+	// close stuff
+	//run("Tile");
 	run("Close All");
-
+	roiManager("reset");
 	if (do_registration){
 		File.delete(TransMatrix_File);
 		print("\\Update:____________________________");
 	}
+
+	// final print & logsave
+	printDateTime("Finished processing "+im_name);
+	time = round((getTime() - start)/1000);
+	timeformat = d2s(floor(time/60),0) + ":" + IJ.pad(time%60,2);
+	
+	if (intermed_times)		print("    image took",timeformat,"min to process");
 	else print("____________________________");
 	selectWindow("Log");
 	saveAs("Text", outdir + "Log_InProgress.txt");
 }
-//run("Tile");
+
+
+
+// FINISHING TOUCHES
 dumpMemory(3); // clear memory
 print("----");
 print("----");
@@ -835,7 +846,7 @@ function fetchSettings(){
 }
 
 
-function doPreliminaries(){
+function closeWindows(){
 	A = nImages;
 	B = roiManager("count");
 	C = nResults;
@@ -848,6 +859,4 @@ function doPreliminaries(){
 	run("Close All");
 	roiManager("reset");
 	dumpMemory(3);
-	fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin (might be obsolete after FiJi update, but has no negative effect)
-	
 }
