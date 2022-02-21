@@ -1,115 +1,21 @@
 requires("1.53f");	// for Array.filter()
 requireLUTs();	// checks if relevant LUTs are available
 
-// load settings
-settings_dir = getDirectory("macros") + "settings" + File.separator;
-File.makeDirectory(settings_dir);
-settings_file = settings_dir + "OrgaMovie_v3.txt";
-List.clear();
-if(File.exists(settings_file)){
-	raw = File.openAsString(settings_file);
-	List.setList(raw);
-}
-else	default_settings();
-
-// dialog settings/layout
-showdialogwindow = 1;
-colw = 8;
-title_fontsize = 15;
-github = "https://github.com/DaniBodor/OrgaMovie_v3#input-settings";
-LUTlist = getList("LUTs");
-output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
-print("\\Clear");
-
-// open dialog
-while (showdialogwindow) {
-	Dialog.createNonBlocking("OrgaMovie Settings");
-		Dialog.addHelp(github);
-		
-		Dialog.setInsets(10, 0, 0);
-		Dialog.addMessage("Input/output settings",title_fontsize);
-		Dialog.setInsets(0, 0, -2);
-		Dialog.addString("Input filetype", List.get("extension"), colw-2);
-		Dialog.addNumber("Input channel", List.get("input_channel"), 0, colw, "");
-		Dialog.addNumber("Time interval", List.get("T_step"), 0, colw, "min");
-		Dialog.addNumber("Z-step", List.get("Z_step"), 1, colw, getInfo("micrometer.abbreviation"));
-		Dialog.addChoice("Output format", output_options, List.get("out_format"));
-		Dialog.setInsets(0, 40, 0);
-		Dialog.addCheckbox("Save separate projections", List.get("saveSinglePRJs"));
-	
-		Dialog.setInsets(20, 0, 0);
-		Dialog.addMessage("\nMovie settings",title_fontsize);
-		Dialog.setInsets(0, 0, 0);
-		Dialog.addNumber("Frame rate", List.get("framerate"), 0, colw, "frames / sec");
-		Dialog.setInsets(2, 40, -2);
-		Dialog.addCheckbox("Apply drift correction", List.get("driftcorrect"));
-		Dialog.addChoice("Depth coding", LUTlist, List.get("depth_LUT"));
-		Dialog.addChoice("Projection LUT", LUTlist, List.get("prj_LUT"));
-		Dialog.addNumber("Pixel saturation", List.get("satpix"), 2, colw, "%");
-		Dialog.addNumber("Min intensity factor", List.get("minBrightFactor"), 1, colw, "");
-		Dialog.addNumber("Crop boundary", List.get("crop_boundary"), 0, colw, "pixels");
-		Dialog.addNumber("Scalebar target width", List.get("scalebartarget"), 0, colw, "% of total width");
-	
-		Dialog.setInsets(20, 0, 0);
-		Dialog.addMessage("ImageJ settings",title_fontsize);
-		Dialog.setInsets(0, 40, 0);
-		Dialog.addCheckbox("Reduce RAM usage", List.get("reduceRAM"));
-		Dialog.setInsets(0, 40, 0);
-		Dialog.addCheckbox("Print progress duration", List.get("intermed_times"));
-		//Dialog.setInsets(0, 40, 0);
-		//Dialog.addCheckbox("Run in background (doesn't work yet)", List.get("run_in_bg"));
-		Dialog.setInsets(0, 40, 0);
-		Dialog.addCheckbox("Save these settings for next time", 0);
-		Dialog.setInsets(0, 40, 0);
-		if (showdialogwindow)	Dialog.addCheckbox("Load defaults (will show this window again)", 0);
-	
-	Dialog.show();
-		// move settings from dialog window into a key/value list
-		List.clear();
-
-		// input/output settings
-		List.set("extension", Dialog.getString());
-		List.set("input_channel", Dialog.getNumber());
-		List.set("T_step", Dialog.getNumber());
-		List.set("Z_step", Dialog.getNumber());
-		List.set("out_format", Dialog.getChoice());
-		List.set("saveSinglePRJs", Dialog.getCheckbox());
-
-		//movie settings
-		List.set("framerate", Dialog.getNumber());
-		List.set("driftcorrect", Dialog.getCheckbox());
-		List.set("depth_LUT", Dialog.getChoice());
-		List.set("prj_LUT", Dialog.getChoice());
-		List.set("satpix", Dialog.getNumber());
-		List.set("minBrightFactor", Dialog.getNumber());
-		List.set("crop_boundary", Dialog.getNumber());
-		List.set("scalebartarget", Dialog.getNumber());	// proportion of image width best matching scale bar width
-
-		//imagej settings
-		List.set("reduceRAM", Dialog.getCheckbox());
-		List.set("intermed_times", Dialog.getCheckbox());
-		List.set("run_in_bg",0);	//buggy; don't understand why. see github issues for info on bug
-		//List.set("run_in_bg",Dialog.getCheckbox());
-		
-		// the following 2 settings are not exported
-		export_settings = Dialog.getCheckbox();
-		if (Dialog.getCheckbox() )	default_settings();
-		else showdialogwindow = 0;
-}
-
-// handle dialog settings
+//get macro settings from dialog
+fetchSettings();
 InputSettings = List.getList;
-if (export_settings)	File.saveString(InputSettings, settings_file);
 
+// move recurring setttings into variables
 do_registration = List.get("driftcorrect");
 depth_LUT = List.get("depth_LUT");
 prj_LUT = List.get("prj_LUT");
 intermed_times = List.get("intermed_times");
 
+// memory allocation & BatchMode
 IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
 chunkSizeLimit = IJmem/4;						// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
 if (List.get("reduceRAM")) chunkSizeLimit = chunkSizeLimit / 2;	// in case someone runs into RAM problems, this should be sufficient
-
+setBatchMode(List.get("run_in_bg"));	// buggy, always off
 
 //// SETTINGS NOT IN DIALOG
 // visual settings
@@ -124,7 +30,6 @@ header_height = 48; // pixel height of header
 fontsize = round(header_height/3);
 header_pixoffset = 4;
 setFont("SansSerif", fontsize, "antialiased");
-scalebar_size = 25;	// microns (unused)
 scalebarOptions = newArray(1, 2, 5, 7.5, 10, 15, 20, 25, 40, 50, 60, 75, 100, 125, 150, 200, 250, 500, 750, 1000, 1500, 2000); /// in microns
 
 
@@ -134,9 +39,8 @@ scalebarOptions = newArray(1, 2, 5, 7.5, 10, 15, 20, 25, 40, 50, 60, 75, 100, 12
 print("\\Clear");
 run("Close All");
 roiManager("reset");
-fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin
-setBatchMode(List.get("run_in_bg"));	// bug, see above
 dumpMemory(3);
+fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin
 
 // find all images in base directory
 dir = getDirectory("Choose directory with images to process");
@@ -153,9 +57,6 @@ else	{
 	print("were found in: "+dir);
 	exit(getInfo("log"));
 }
-
-
-
 
 // start running on all images
 printDateTime("running OrgaMovie macro on: "+ dir);
@@ -829,4 +730,104 @@ function default_settings(){
 
 	InputSettings = List.getList;
 	return InputSettings;
+}
+
+
+function fetchSettings(){
+// load settings
+	settings_dir = getDirectory("macros") + "settings" + File.separator;
+	File.makeDirectory(settings_dir);
+	settings_file = settings_dir + "OrgaMovie_v3.txt";
+	List.clear();
+	if(File.exists(settings_file)){
+		raw = File.openAsString(settings_file);
+		List.setList(raw);
+	}
+	else	default_settings();
+	
+	// dialog settings/layout
+	showdialogwindow = 1;
+	colw = 8;
+	title_fontsize = 15;
+	github = "https://github.com/DaniBodor/OrgaMovie_v3#input-settings";
+	LUTlist = getList("LUTs");
+	output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
+	print("\\Clear");
+	
+	// open dialog
+	while (showdialogwindow) {
+		Dialog.createNonBlocking("OrgaMovie Settings");
+			Dialog.addHelp(github);
+			
+			Dialog.setInsets(10, 0, 0);
+			Dialog.addMessage("Input/output settings",title_fontsize);
+			Dialog.setInsets(0, 0, -2);
+			Dialog.addString("Input filetype", List.get("extension"), colw-2);
+			Dialog.addNumber("Input channel", List.get("input_channel"), 0, colw, "");
+			Dialog.addNumber("Time interval", List.get("T_step"), 0, colw, "min");
+			Dialog.addNumber("Z-step", List.get("Z_step"), 1, colw, getInfo("micrometer.abbreviation"));
+			Dialog.addChoice("Output format", output_options, List.get("out_format"));
+			Dialog.setInsets(0, 40, 0);
+			Dialog.addCheckbox("Save separate projections", List.get("saveSinglePRJs"));
+		
+			Dialog.setInsets(20, 0, 0);
+			Dialog.addMessage("\nMovie settings",title_fontsize);
+			Dialog.setInsets(0, 0, 0);
+			Dialog.addNumber("Frame rate", List.get("framerate"), 0, colw, "frames / sec");
+			Dialog.setInsets(2, 40, -2);
+			Dialog.addCheckbox("Apply drift correction", List.get("driftcorrect"));
+			Dialog.addChoice("Depth coding", LUTlist, List.get("depth_LUT"));
+			Dialog.addChoice("Projection LUT", LUTlist, List.get("prj_LUT"));
+			Dialog.addNumber("Pixel saturation", List.get("satpix"), 2, colw, "%");
+			Dialog.addNumber("Min intensity factor", List.get("minBrightFactor"), 1, colw, "");
+			Dialog.addNumber("Crop boundary", List.get("crop_boundary"), 0, colw, "pixels");
+			Dialog.addNumber("Scalebar target width", List.get("scalebartarget"), 0, colw, "% of total width");
+		
+			Dialog.setInsets(20, 0, 0);
+			Dialog.addMessage("ImageJ settings",title_fontsize);
+			Dialog.setInsets(0, 40, 0);
+			Dialog.addCheckbox("Reduce RAM usage", List.get("reduceRAM"));
+			Dialog.setInsets(0, 40, 0);
+			Dialog.addCheckbox("Print progress duration", List.get("intermed_times"));
+			//Dialog.setInsets(0, 40, 0);
+			//Dialog.addCheckbox("Run in background (doesn't work yet)", List.get("run_in_bg"));
+			Dialog.setInsets(0, 40, 0);
+			Dialog.addCheckbox("Save these settings for next time", 0);
+			Dialog.setInsets(0, 40, 0);
+			if (showdialogwindow)	Dialog.addCheckbox("Load defaults (will show this window again)", 0);
+		
+		Dialog.show();
+			// move settings from dialog window into a key/value list
+			List.clear();
+	
+			// input/output settings
+			List.set("extension", Dialog.getString());
+			List.set("input_channel", Dialog.getNumber());
+			List.set("T_step", Dialog.getNumber());
+			List.set("Z_step", Dialog.getNumber());
+			List.set("out_format", Dialog.getChoice());
+			List.set("saveSinglePRJs", Dialog.getCheckbox());
+	
+			//movie settings
+			List.set("framerate", Dialog.getNumber());
+			List.set("driftcorrect", Dialog.getCheckbox());
+			List.set("depth_LUT", Dialog.getChoice());
+			List.set("prj_LUT", Dialog.getChoice());
+			List.set("satpix", Dialog.getNumber());
+			List.set("minBrightFactor", Dialog.getNumber());
+			List.set("crop_boundary", Dialog.getNumber());
+			List.set("scalebartarget", Dialog.getNumber());	// proportion of image width best matching scale bar width
+	
+			//imagej settings
+			List.set("reduceRAM", Dialog.getCheckbox());
+			List.set("intermed_times", Dialog.getCheckbox());
+			List.set("run_in_bg",0);	//buggy; don't understand why. see github issues for info on bug
+			//List.set("run_in_bg",Dialog.getCheckbox());
+			
+			// the following 2 settings are not exported
+			export_settings = Dialog.getCheckbox();
+			if (Dialog.getCheckbox() )	default_settings();
+			else showdialogwindow = 0;
+	}
+	if (export_settings)	File.saveString(InputSettings, settings_file);
 }
