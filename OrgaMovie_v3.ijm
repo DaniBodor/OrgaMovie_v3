@@ -9,6 +9,7 @@ fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin (might
 
 //// SELECT SETTINGS
 //get settings from dialog
+output_options = newArray("avi & tif", "avi only", "tif only");
 fetchSettings();
 InputSettings = List.getList;
 
@@ -62,9 +63,9 @@ else	{
 
 ////////////////////////////////////////////// START MACRO //////////////////////////////
 
-print("____________________________");
+print("____________________________\n");
 printDateTime("running OrgaMovie macro on: "+ dir);
-print("____________________________");
+print("____________________________\n");
 
 for (im = 0; im < im_list.length; im++) {
 	// image preliminaries
@@ -219,7 +220,7 @@ for (im = 0; im < im_list.length; im++) {
 	print("assemble into OrgaMovie");
 	fuseImages();
 	savename = outdir + outname_base + "_OrgaMovie";
-		//output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");	// TO SEE FORMAT OF OUTPUT_OPTIONS
+		//output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");	// TO SEE FORMAT OF OUTPUT OPTIONS ARRAY
 	if (List.get("out_format") != output_options[1])
 		saveAs("Tiff", savename);
 	if (List.get("out_format") != output_options[2])
@@ -232,7 +233,7 @@ for (im = 0; im < im_list.length; im++) {
 	roiManager("reset");
 	if (do_registration){
 		File.delete(TransMatrix_File);
-		print("\\Update:____________________________");
+		print("\\Update:");
 	}
 
 	// final print & logsave
@@ -240,8 +241,8 @@ for (im = 0; im < im_list.length; im++) {
 	time = round((getTime() - start)/1000);
 	timeformat = d2s(floor(time/60),0) + ":" + IJ.pad(time%60,2);
 	
-	if (intermed_times)		print("    image took",timeformat,"min to process");
-	else print("____________________________");
+	if (intermed_times)		print("    image took",timeformat,"(min:sec) to process");
+	print("____________________________");
 	selectWindow("Log");
 	saveAs("Text", outdir + "Log_InProgress.txt");
 }
@@ -758,7 +759,6 @@ function fetchSettings(){
 	title_fontsize = 15;
 	github = "https://github.com/DaniBodor/OrgaMovie_v3#input-settings";
 	LUTlist = getList("LUTs");
-	output_options = newArray("*.avi AND *.tif", "*.avi only", "*.tif only");
 	print("\\Clear");
 	
 	// open dialog
