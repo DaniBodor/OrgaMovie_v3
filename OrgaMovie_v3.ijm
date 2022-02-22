@@ -719,6 +719,7 @@ function default_settings(){
 	List.set("extension", "nd2");
 	List.set("input_channel", 1);
 	List.set("T_step", 3);
+	List.set("dyn_time", 0);
 	List.set("Z_step", 2.5);
 	List.set("out_format", "*.avi AND *.tif");
 	List.set("saveSinglePRJs", 0);
@@ -772,6 +773,7 @@ function fetchSettings(){
 			Dialog.addString("Input filetype", List.get("extension"), colw-2);
 			Dialog.addNumber("Input channel", List.get("input_channel"), 0, colw, "");
 			Dialog.addNumber("Time interval", List.get("T_step"), 0, colw, "min");
+			Dialog.addCheckbox("Dynamic time", List.get("dyn_time"));
 			Dialog.addNumber("Z-step", List.get("Z_step"), 1, colw, getInfo("micrometer.abbreviation"));
 			Dialog.addChoice("Output format", output_options, List.get("out_format"));
 			Dialog.setInsets(0, 40, 0);
@@ -811,6 +813,7 @@ function fetchSettings(){
 			List.set("extension", replace(Dialog.getString(),".",""));
 			List.set("input_channel", Dialog.getNumber());
 			List.set("T_step", Dialog.getNumber());
+			List.set("dyn_time", Dialog.getCheckbox());
 			List.set("Z_step", Dialog.getNumber());
 			List.set("out_format", Dialog.getChoice());
 			List.set("saveSinglePRJs", Dialog.getCheckbox());
