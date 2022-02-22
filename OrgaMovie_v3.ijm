@@ -719,7 +719,8 @@ function default_settings(){
 	List.set("extension", "nd2");
 	List.set("input_channel", 1);
 	List.set("T_step", 3);
-	List.set("dyn_time", 0);
+	List.set("epochs", 1);
+	List.set("show_switch",0);
 	List.set("Z_step", 2.5);
 	List.set("out_format", "*.avi AND *.tif");
 	List.set("saveSinglePRJs", 0);
@@ -736,23 +737,33 @@ function default_settings(){
 	List.set("reduceRAM", 0);
 	List.set("intermed_times", 0);
 	List.set("run_in_bg", false);
-
-	InputSettings = List.getList;
-	return InputSettings;
 }
 
 
 function fetchSettings(){
-// load settings
+	// load default settings
+	default_settings();
+	List.toArrays(def_keys, def_values);
+
+	// load previous settings
 	settings_dir = getDirectory("macros") + "settings" + File.separator;
 	File.makeDirectory(settings_dir);
 	settings_file = settings_dir + "OrgaMovie_v3.txt";
-	List.clear();
 	if(File.exists(settings_file)){
-		raw = File.openAsString(settings_file);
-		List.setList(raw);
+		settings_string = File.openAsString(settings_file);
+		List.setList(settings_string);
+		
+		// in case any default settings are missing from saved file, add these back
+			// e.g. due to new settings added in updates or due to corruption of the settings file
+		List.toArrays(load_keys, load_values);
+		for (i = 0; i < def_keys.length; i++) {
+			filtered = Array.filter(load_keys,def_keys[i]);	// either empty array or array of length 1
+			present = lengthOf(filtered);	// should output 0 or 1 --> can be used as boolean
+			if ( !present )		List.set(def_keys[i], def_values[i]);
+		}
 	}
-	else	default_settings();
+
+
 	
 	// dialog settings/layout
 	showdialogwindow = 1;
@@ -773,7 +784,10 @@ function fetchSettings(){
 			Dialog.addString("Input filetype", List.get("extension"), colw-2);
 			Dialog.addNumber("Input channel", List.get("input_channel"), 0, colw, "");
 			Dialog.addNumber("Time interval", List.get("T_step"), 0, colw, "min");
-			Dialog.addCheckbox("Dynamic time", List.get("dyn_time"));
+			//Dialog.setInsets(-28, 250, 0);	// might go to shit on Mac
+			//Dialog.setInsets(0, 40, 0);
+			//Dialog.addToSameRow();
+			Dialog.addNumber("Time-lapse epochs", List.get("epochs"));
 			Dialog.addNumber("Z-step", List.get("Z_step"), 1, colw, getInfo("micrometer.abbreviation"));
 			Dialog.addChoice("Output format", output_options, List.get("out_format"));
 			Dialog.setInsets(0, 40, 0);
@@ -807,13 +821,12 @@ function fetchSettings(){
 		
 		Dialog.show();
 			// move settings from dialog window into a key/value list
-			List.clear();
 	
 			// input/output settings
 			List.set("extension", replace(Dialog.getString(),".",""));
 			List.set("input_channel", Dialog.getNumber());
 			List.set("T_step", Dialog.getNumber());
-			List.set("dyn_time", Dialog.getCheckbox());
+			List.set("epochs", Dialog.getNumber());
 			List.set("Z_step", Dialog.getNumber());
 			List.set("out_format", Dialog.getChoice());
 			List.set("saveSinglePRJs", Dialog.getCheckbox());
@@ -839,6 +852,36 @@ function fetchSettings(){
 			if (Dialog.getCheckbox() )	default_settings();
 			else showdialogwindow = 0;
 	}
+
+	// dynamic time settings
+	if (List.get("epochs") > 1){
+		Dialog.create("Dynamic Time Settings");
+		Dialog.addMessage("Set interval and duration (in number of frames) for each time-lapse sequence.\n"+
+							"  Set duration to 0 if this is the final step size (all settings below will be ignored).");
+
+		// add a step size and duration setting for each epoch
+		for (x = 1; x <= List.get("epochs"); x++) {
+			Tx = "T_step_"+x;
+			Dx = "Duration_"+x;
+			
+			if (List.get(Tx) == "")	List.set(Tx,List.get("T_step"));
+			if (List.get(Dx) == "")	List.set(Dx,0);
+
+			Dialog.addNumber("Time interval "+x, List.get(Tx), 0, colw, "min");
+			Dialog.addNumber("Duration "+x, List.get(Dx), 0, colw, "frames");
+			Dialog.setInsets(15, 0, 3);
+		}
+			Dialog.addCheckbox("Indicate time switch in movie?", List.get("show_switch") );
+	}
+	
+		Dialog.show();
+		for (x = 0; x < List.get("epochs"); x++) {
+			List.set("T_step_"+x, Dialog.getNumber());
+			List.set("Duration "+x,	Dialog.getNumber());
+		}
+		List.set("show_switch",	Dialog.getCheckbox());
+		
+	
 	InputSettings = List.getList;
 	if (export_settings)	File.saveString(InputSettings, settings_file);
 
@@ -850,6 +893,8 @@ function fetchSettings(){
 
 
 function closeWindows(){
+	while (isOpen("Exception"))	close("Exception");
+	
 	A = nImages;
 	B = roiManager("count");
 	C = nResults;
