@@ -212,7 +212,7 @@ for (im = 0; im < im_list.length; im++) {
 		// create scale bar and time stamp
 		scalebarsize = findScalebarSize();
 		run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
-		timeStamper(List.get("T_step"));
+		timeStamper();
 	}
 	if (intermed_times)	before = printTime(before);
 
@@ -636,16 +636,34 @@ function deleteIntermediates(filestart, directory){
 }
 
 
-function timeStamper(T_step){
-	// fix offsetting bug of time stamper in 00:00 format
-	w_dec_form = getStringWidth("00:00");
-	w_num_form = getStringWidth(toString(frames*T_step)+"_");
-	x_corr = w_dec_form - w_num_form;
-	x_pos = 2 + x_corr;
-
-	// stamp time
+function timeStamper(){
+	main = getTitle();
+	//create new image to place timestamp in
+	newImage("TimeStamp", "8-bit black", getWidth, fontsize, nSlices);
 	run("Colors...", "foreground=white");
-	run("Time Stamper", "starting=0 interval="+T_step+" x="+x_pos+" y="+getHeight-2+" font="+fontsize+" '00 decimal=0 anti-aliased or=_");
+	timebar = getTitle();
+	
+	// initialize
+	startframe = 1;
+	starttime = 0;
+	
+	// loop through epochs
+	for (i = 0; i < List.get("epochs"); i++) {	
+		// get stepsize and duration of epoch
+		T_step = List.get("Epoch"+i+"_Tstep");
+		duration = List.get("Epoch"+i+"_Duration")
+		if (duration == 0)	endframe = nSlices;	// duration set to 0 means until end of movie
+		else endframe = startframe + duration;	// otherwise duration set in number of frames
+
+		// stamp time
+		run("Label...", "format=00:00:00 starting="+starttime*60+" interval="+T_step*60+" x=0 y="+fontsize/8+" font="+fontsize+" range="+startframe+"-"+endframe);
+
+		startframe = endframe // next cycle will copy last (easier to calculate starttime for net cycle this way)
+		starttime = starttime + T_step*duration
+	}
+	
+	// PLACEHOLDER delete final :00 --> use getStringWidth(string);
+	// PLACEHOLDER combine with main	
 }
 
 
@@ -854,33 +872,38 @@ function fetchSettings(){
 	}
 
 	// dynamic time settings
-	if (List.get("epochs") > 1){
+	nEpochs = List.get("epochs")
+	if (nEpochs > 1){
 		Dialog.create("Dynamic Time Settings");
-		Dialog.addMessage("Set interval and duration (in number of frames) for each time-lapse sequence.\n"+
-							"  Set duration to 0 if this is the final step size (all settings below will be ignored).");
+		Dialog.addMessage("Set interval and duration (in hours) for each time-lapse sequence.\n"+
+							"  You can set duration to 0 for the final epoch (all further epochs will be ignored).");
 
 		// add a step size and duration setting for each epoch
-		for (x = 1; x <= List.get("epochs"); x++) {
-			Tx = "T_step_"+x;
-			Dx = "Duration_"+x;
+		for (x = 0; x < nEpochs; x++) {
+			Tx = "Epoch"+x+"_Tstep";
+			Dx = "Epoch"+x+"_Duration";
 			
 			if (List.get(Tx) == "")	List.set(Tx,List.get("T_step"));
 			if (List.get(Dx) == "")	List.set(Dx,0);
 
 			Dialog.addNumber("Time interval "+x, List.get(Tx), 0, colw, "min");
-			Dialog.addNumber("Duration "+x, List.get(Dx), 0, colw, "frames");
+			Dialog.addNumber("Duration "+x, List.get(Dx), 0, colw, "hours");
 			Dialog.setInsets(15, 0, 3);
 		}
 			Dialog.addCheckbox("Indicate time switch in movie?", List.get("show_switch") );
-	}
 	
 		Dialog.show();
-		for (x = 0; x < List.get("epochs"); x++) {
+		for (x = 0; x < nEpochs; x++) {
 			List.set(Tx, Dialog.getNumber());
 			List.set(Dx, Dialog.getNumber());
 		}
 		List.set("show_switch",	Dialog.getCheckbox());
-		
+	}
+	else {
+		List.set("Epoch0_Tstep",List.get("T_step"));
+		List.set("Epoch0_Duration",0);
+	}
+
 	
 	InputSettings = List.getList;
 	if (export_settings)	File.saveString(InputSettings, settings_file);
