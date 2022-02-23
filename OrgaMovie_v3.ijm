@@ -876,8 +876,8 @@ function fetchSettings(){
 	
 		Dialog.show();
 		for (x = 0; x < List.get("epochs"); x++) {
-			List.set("T_step_"+x, Dialog.getNumber());
-			List.set("Duration "+x,	Dialog.getNumber());
+			List.set(Tx, Dialog.getNumber());
+			List.set(Dx, Dialog.getNumber());
 		}
 		List.set("show_switch",	Dialog.getCheckbox());
 		
