@@ -183,7 +183,7 @@ for (im = 0; im < im_list.length; im++) {
 		if (intermed_times)	before = printTime(before);
 	}
 
-	// find final crop reagion
+	// find final crop region
 	print("process separate images");
 	selectImage(prj_concat);
 	if (do_registration)	findSignalSpace(List.get("crop_boundary"));
@@ -668,6 +668,23 @@ function timeStamper(){
 
 
 
+function closeWindows(){
+	while (isOpen("Exception"))	close("Exception");
+	
+	A = nImages;
+	B = roiManager("count");
+	C = nResults;
+	D = getInfo("log");
+	if (A+B+C>0 && D!="")	waitForUser("Close all without saving?", "All open images, ROI lists, results, log text, etc will be closed without saving.\n\n"+
+								"Click OK to continue.");
+
+	// preliminaries
+	print("\\Clear");
+	run("Close All");
+	roiManager("reset");
+	dumpMemory(3);
+}
+
 
 function printTime(before){
 	after = getTime();
@@ -728,33 +745,6 @@ function requireLUTs(){
 					"\n \nThen restart FiJi.");
 		exit("restart FiJi after installing LUTs");
 	}
-}
-
-
-function default_settings(){
-	List.clear();
-	// input/output settings
-	List.set("extension", "nd2");
-	List.set("input_channel", 1);
-	List.set("T_step", 3);
-	List.set("epochs", 1);
-	List.set("show_switch",0);
-	List.set("Z_step", 2.5);
-	List.set("out_format", "*.avi AND *.tif");
-	List.set("saveSinglePRJs", 0);
-	//movie settings
-	List.set("framerate", 18);
-	List.set("driftcorrect", 1);
-	List.set("depth_LUT", "Depth Organoid");
-	List.set("prj_LUT","The Real Glow");
-	List.set("satpix", 0.1);
-	List.set("minBrightFactor", 1);
-	List.set("crop_boundary", 24);
-	List.set("scalebartarget", 20);
-	//imagej settings
-	List.set("reduceRAM", 0);
-	List.set("intermed_times", 0);
-	List.set("run_in_bg", false);
 }
 
 
@@ -911,23 +901,34 @@ function fetchSettings(){
 	//print settings
 	print("Input settings from dialog:");
 	print(" ",InputSettings.replace("\n","\n  "));	// kinda funky way to make it print all the settings with 2 spacess before
-
 }
 
 
-function closeWindows(){
-	while (isOpen("Exception"))	close("Exception");
-	
-	A = nImages;
-	B = roiManager("count");
-	C = nResults;
-	D = getInfo("log");
-	if (A+B+C>0 && D!="")	waitForUser("Close all without saving?", "All open images, ROI lists, results, log text, etc will be closed without saving.\n\n"+
-								"Click OK to continue.");
-
-	// preliminaries
-	print("\\Clear");
-	run("Close All");
-	roiManager("reset");
-	dumpMemory(3);
+function default_settings(){
+	List.clear();
+	// input/output settings
+	List.set("extension", "nd2");
+	List.set("input_channel", 1);
+	List.set("T_step", 3);
+	List.set("epochs", 1);
+	List.set("Z_step", 2.5);
+	List.set("out_format", "*.avi AND *.tif");
+	List.set("saveSinglePRJs", 0);
+	//movie settings
+	List.set("framerate", 18);
+	List.set("driftcorrect", 1);
+	List.set("depth_LUT", "Depth Organoid");
+	List.set("prj_LUT","The Real Glow");
+	List.set("satpix", 0.1);
+	List.set("minBrightFactor", 1);
+	List.set("crop_boundary", 24);
+	List.set("scalebartarget", 20);
+	//imagej settings
+	List.set("reduceRAM", 0);
+	List.set("intermed_times", 0);
+	List.set("run_in_bg", false);
+	// dynamic time settings
+	List.set("show_switch",0);
+	List.set("Epoch0_Duration",18*20+1);	//first 18 hours
+	List.set("Epoch1_Tstep",10);
 }
