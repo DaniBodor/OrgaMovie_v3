@@ -208,11 +208,6 @@ for (im = 0; im < im_list.length; im++) {
 			saveAs("Tiff", outdir + outname_base + "_" + getTitle());
 			rename(outputArray[x]);	// fixes renaming after saving
 		}
-
-		// create scale bar and time stamp
-		timeStamper();
-		scalebarsize = findScalebarSize();
-		run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
 	}
 	if (intermed_times)	before = printTime(before);
 
@@ -503,7 +498,7 @@ function depthCoding(){
 }
 
 
-function findScalebarSize(){
+function findScaleBarSize(){
 	// get ideal width for scale bar
 	fullW = getWidth() * pixelWidth;
 	idealW = fullW * List.get("scalebartarget") / 100;
@@ -517,13 +512,14 @@ function findScalebarSize(){
 	for (i = 0; i < scalebarOptions.length; i++) {
 		diff = abs(scalebarOptions[i] - idealW);
 		if (diff < minDiff) {
-			returnValue = scalebarOptions[i];
+			scalebarsize = scalebarOptions[i];
 			minDiff = diff;
 		}
 	}
 
 	// return best match scalebar size
-	return returnValue;
+	return scalebarsize;
+	
 }
 
 function makeHeaderImage(title, type){
@@ -600,24 +596,47 @@ function fuseImages(){
 	// create 2 header images
 	header1 = "DEPTH ("+ getInfo("micrometer.abbreviation") + ")";	// DEPTH (micron)
 	makeHeaderImage(header1, "d");
-	rename("HEAD1");
+	rename("HEAD0");
 	
 	header2 = "PROJECTION (AU)";
 	makeHeaderImage(header2, "p");
-	rename("HEAD2");
-	
-	// combine images
-	run("Combine...", "stack1=" + rgb_concat + " stack2=" + prj_concat);	// main movies
-	rename("MAIN");
-	run("Combine...", "stack1=HEAD1 stack2=HEAD2"); // headers
-	rename("HEADS");
-	run("Combine...", "stack1=HEADS stack2=MAIN combine"); // headers above movies
+	rename("HEAD1");
 
+	scalebarsize = findScaleBarSize();
+	for (i = 0; i < 2; i++) {
+		// create scale bar and time stamp
+		timeStamper();
+		rename("FOOT"+i);
+		//run("Scale Bar...", "width="+scalebarsize+" height=2 thickness=4 font="+fontsize+" color=White background=None location=[Lower Right] label");
+	}
+	
+	// combine RGB stuff
+	run("Combine...", "stack1=HEAD0 stack2=" + rgb_concat + " combine");
+	rename("RGB_C");
+	run("Combine...", "stack1=RGB_C stack2=FOOT0 combine");
+	rename("RGB_C");
+	run("Scale Bar...", "width="+scalebarsize+" height=2 thickness=4 font="+fontsize+" color=White background=None location=[Lower Right] label");
+
+	// combine MAX stuff
+	run("Combine...", "stack1=HEAD1 stack2=" + prj_concat + " combine");
+	rename("PRJ_C");
+	run("Combine...", "stack1=PRJ_C stack2=FOOT1 combine");
+	rename("PRJ_C");
+	run("Scale Bar...", "width="+scalebarsize+" height=2 thickness=4 font="+fontsize+" color=White background=None location=[Lower Right] label");
+	
+	// combine images horizontally
+	run("Combine...", "stack1=RGB_C stack2=PRJ_C");
+
+	// draw vertical line between movie types
 	for (n = 0; n < nSlices; n++) {
 		setSlice(n+1);
 		setColor(128,128,128);
 		drawLine(getWidth()/2, 0, getWidth()/2, getHeight());
 	}
+
+	// crop off empty bottom
+	makeRectangle(0, 0, getWidth, getHeight-6);
+	run("Crop");
 }
 
 function deleteIntermediates(filestart, directory){
@@ -637,9 +656,15 @@ function deleteIntermediates(filestart, directory){
 
 
 function timeStamper(){
-	main = getTitle();
+	// find type of image to create
+	getVoxelSize(width, height, depth, unit);
+	depth = bitDepth();
+	if (bitDepth() == 24)	type = "RGB";
+	else					type = ""+round(depth)+"-bit";
+
 	//create new image to place timestamp in
-	newImage("TimeStamp", "8-bit black", getWidth, fontsize+5, nSlices);
+	newImage("TimeStamp", type+" black", getWidth, fontsize+5+8, nSlices);
+	setVoxelSize(width, height, depth, unit);
 	run("Colors...", "foreground=white");
 	timebar = getTitle();
 	
