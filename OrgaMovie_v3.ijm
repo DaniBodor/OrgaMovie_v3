@@ -880,7 +880,7 @@ function fetchSettings(){
 	}
 
 	// dynamic time settings
-	nEpochs = List.get("epochs")
+	nEpochs = parseInt(List.get("epochs"));
 	if (nEpochs > 1){
 		Dialog.create("Dynamic Time Settings");
 		Dialog.addMessage("Set interval and duration (in hours) for each time-lapse sequence.\n"+
@@ -891,8 +891,8 @@ function fetchSettings(){
 			Tx = "Epoch"+x+"_Tstep";
 			Dx = "Epoch"+x+"_Duration";
 			
-			if (List.get(Tx) == "")	List.set(Tx,List.get("T_step"));
-			if (List.get(Dx) == "")	List.set(Dx,0);
+			if (List.get(Tx) == "") List.set(Tx,List.get("T_step"));
+			if (List.get(Dx) == "") List.set(Dx,0);
 
 			Dialog.addNumber("Time interval "+x, List.get(Tx), 0, colw, "min");
 			Dialog.addNumber("Duration "+x, List.get(Dx), 0, colw, "hours");
@@ -902,8 +902,8 @@ function fetchSettings(){
 	
 		Dialog.show();
 		for (x = 0; x < nEpochs; x++) {
-			List.set(Tx, Dialog.getNumber());
-			List.set(Dx, Dialog.getNumber());
+			List.set("Epoch"+x+"_Tstep", Dialog.getNumber());
+			List.set("Epoch"+x+"_Duration", Dialog.getNumber());
 		}
 		List.set("show_switch",	Dialog.getCheckbox());
 	}
