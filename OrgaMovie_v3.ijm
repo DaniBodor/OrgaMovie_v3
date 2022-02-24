@@ -24,7 +24,7 @@ setBatchMode(List.get("run_in_bg"));	// buggy, always off
 IJmem = parseInt(IJ.maxMemory())/1073741824;	// RAM available to IJ according to settings (GB)
 chunkSizeLimit = IJmem/4;						// chunks of 1/4 of available memory ensure that 16bit images will be processed without exceeding memory
 if (List.get("reduceRAM")) chunkSizeLimit = chunkSizeLimit / 2;	// in case someone runs into RAM problems, this should be sufficient
-print("size limit for 16-bit images is", round(chunkSizeLimit*10)/10, "GB");
+print("\\Update:size limit for 16-bit chunks is", round(chunkSizeLimit*10)/10, "GB");
 
 
 //// SETTINGS NOT IN DIALOG
@@ -670,18 +670,20 @@ function timeStamper(){
 
 function closeWindows(){
 	while (isOpen("Exception"))	close("Exception");
-	
+
+	// show warning?
 	A = nImages;
 	B = roiManager("count");
 	C = nResults;
 	D = getInfo("log");
-	if (A+B+C>0 && D!="")	waitForUser("Close all without saving?", "All open images, ROI lists, results, log text, etc will be closed without saving.\n\n"+
+	if (A+B+C>0)	waitForUser("Close all without saving?", "All open images, ROI lists, results, log text, etc will be closed without saving.\n\n"+
 								"Click OK to continue.");
 
 	// preliminaries
-	print("\\Clear");
+	print("\\Clear");	
 	run("Close All");
 	roiManager("reset");
+	Table.reset();
 	dumpMemory(3);
 }
 
@@ -928,7 +930,7 @@ function default_settings(){
 	List.set("intermed_times", 0);
 	List.set("run_in_bg", false);
 	// dynamic time settings
-	List.set("show_switch",0);
 	List.set("Epoch0_Duration",18*20+1);	//first 18 hours
 	List.set("Epoch1_Tstep",10);
+	List.set("show_switch",0);
 }
