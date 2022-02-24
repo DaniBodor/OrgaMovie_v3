@@ -210,9 +210,9 @@ for (im = 0; im < im_list.length; im++) {
 		}
 
 		// create scale bar and time stamp
+		timeStamper();
 		scalebarsize = findScalebarSize();
 		run("Scale Bar...", "width="+scalebarsize+" height=2 font="+fontsize+" color=White background=None location=[Lower Right] label");
-		timeStamper();
 	}
 	if (intermed_times)	before = printTime(before);
 
@@ -639,30 +639,46 @@ function deleteIntermediates(filestart, directory){
 function timeStamper(){
 	main = getTitle();
 	//create new image to place timestamp in
-	newImage("TimeStamp", "8-bit black", getWidth, fontsize, nSlices);
+	newImage("TimeStamp", "8-bit black", getWidth, fontsize+5, nSlices);
 	run("Colors...", "foreground=white");
 	timebar = getTitle();
 	
 	// initialize
-	startframe = 1;
+	startframe = 0;
 	starttime = 0;
 	
 	// loop through epochs
-	for (i = 0; i < List.get("epochs"); i++) {	
+	for (i = 0; i < List.get("epochs"); i++) {
 		// get stepsize and duration of epoch
-		T_step = List.get("Epoch"+i+"_Tstep");
-		duration = List.get("Epoch"+i+"_Duration")
-		if (duration == 0)	endframe = nSlices;	// duration set to 0 means until end of movie
-		else endframe = startframe + duration;	// otherwise duration set in number of frames
+		T_step = parseFloat(List.get("Epoch"+i+"_Tstep"));
+		duration = parseInt(List.get("Epoch"+i+"_Duration"));
+		if (duration == 0){
+			endframe = nSlices;	// duration set to 0 means until end of movie
+			i += 10000;			// end loop after this
+		}
+		else endframe = minOf(startframe + duration, nSlices);	// otherwise duration set in number of frames
+
+		// set x position of stamp (required for movies of >100h)
+		endtime = (endframe-startframe) * T_step + starttime;
+		if (endtime/60 < 100)	label_x = getStringWidth("0");
+		else					label_x = 0;
 
 		// stamp time
-		run("Label...", "format=00:00:00 starting="+starttime*60+" interval="+T_step*60+" x=0 y="+fontsize/8+" font="+fontsize+" range="+startframe+"-"+endframe);
-
-		startframe = endframe // next cycle will copy last (easier to calculate starttime for net cycle this way)
-		starttime = starttime + T_step*duration
+			// (used 00:00:00-format instead of 00:00-format, because the latter would reset after 60h)
+		print(startframe, endframe, starttime, duration);
+		run("Label...", "format=00:00:00 starting="+starttime*60+" interval="+T_step*60+" x="+label_x+" y=0 font="+fontsize+" range="+startframe+"-"+endframe);
+		
+		// now delete the final :00
+		makeRectangle(getStringWidth("000:00"), 0, getWidth, getHeight);
+		run("Clear", "stack");
+		run("Select None");
+		
+		// set for next loop/end of movie
+		startframe = endframe;
+		starttime = starttime + T_step*duration;
+		if (i == 0)	starttime = starttime - T_step; // fixes t=0 at slice 1 issue
 	}
-	
-	// PLACEHOLDER delete final :00 --> use getStringWidth(string);
+exit;
 	// PLACEHOLDER combine with main	
 }
 
