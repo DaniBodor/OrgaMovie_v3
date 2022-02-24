@@ -76,8 +76,9 @@ for (im = 0; im < im_list.length; im++) {
 	im_name = im_list[im];
 	impath = dir + im_name;
 	outname_base = File.getNameWithoutExtension(im_name);
-	
+
 	// read how many parts image needs to be opened in based on chunkSizeLimit
+	printDateTime("processing file "+im+" of "+im_list.length+": " + path);
 	chunksArray = fileChunks(impath); // returns: newArray(nImageParts,sizeT,chunkSize);
 	nImageParts = chunksArray[0];
 	sizeT		= chunksArray[1];
@@ -142,7 +143,7 @@ for (im = 0; im < im_list.length; im++) {
 	// ASSEMBLE ALL CHUNKS INTO FINAL OUTPUT
 	
 	// open MAX projections
-	print("re-opening all max projections");
+	print("____ re-opening all max projections ____");
 	run("Image Sequence...", "select=["+outdir+"] dir=["+outdir+"] type=16-bit filter="+tempname_max+" sort");
 	rename("PRJMAX");
 	prj_concat = getTitle();
@@ -232,7 +233,7 @@ for (im = 0; im < im_list.length; im++) {
 	}
 
 	// final print & logsave
-	printDateTime("Finished processing "+im_name);
+	printDateTime("finished processing "+im+" of "+im_list.length+": " + im_name);
 	time = round((getTime() - start)/1000);
 	timeformat = d2s(floor(time/60),0) + ":" + IJ.pad(time%60,2);
 	
@@ -248,27 +249,25 @@ for (im = 0; im < im_list.length; im++) {
 dumpMemory(3); // clear memory
 print("----");
 print("----");
-printDateTime("All done; " + im +" movies processed");
+printDateTime("all done; " + im +" movies processed");
 LogString = getInfo("log");
 LogArray = split(LogString, "\n");
 datetime = substring(LogArray[LogArray.length-1],0,15);
 datetime = datetime.replace(" ","_");
 datetime = datetime.replace(":","");
 
-print("Run finished");
 selectWindow("Log");
 saveAs("Text", outdir + "Log_"+datetime+".txt");
+selectWindow("Results");
+run("Close");
 File.delete(outdir + "Log_InProgress.txt");
-print("\\Update:");
+print("run finished");
 
 ////////////////////////////////////// FUNCTIONS //////////////////////////////////////
 ////////////////////////////////////// FUNCTIONS //////////////////////////////////////
 ////////////////////////////////////// FUNCTIONS //////////////////////////////////////
 
 function fileChunks(path){
-	print_statement = "check and open file: " + path;
-	printDateTime(print_statement);
-
 	// get file size
 	filesize = getFileSize(path);
 
@@ -690,7 +689,6 @@ function timeStamper(){
 
 		// stamp time
 			// (used 00:00:00-format instead of 00:00-format, because the latter would reset after 60h)
-		print(startframe, endframe, starttime, duration);
 		run("Label...", "format=00:00:00 starting="+starttime*60+" interval="+T_step*60+" x="+label_x+" y=0 font="+fontsize+" range="+startframe+"-"+endframe);
 		
 		// now delete the final :00
@@ -703,14 +701,13 @@ function timeStamper(){
 		starttime = starttime + T_step*duration;
 		if (i == 0)	starttime = starttime - T_step; // fixes t=0 at slice 1 issue
 	}
-exit;
-	// PLACEHOLDER combine with main	
 }
 
 
 
 function closeWindows(){
 	while (isOpen("Exception"))	close("Exception");
+	dumpMemory(3);
 
 	// show warning?
 	A = nImages;
@@ -723,9 +720,9 @@ function closeWindows(){
 	// preliminaries
 	print("\\Clear");	
 	run("Close All");
+	dumpMemory(3);
 	roiManager("reset");
 	Table.reset();
-	dumpMemory(3);
 }
 
 
