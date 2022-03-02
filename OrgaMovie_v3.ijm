@@ -78,7 +78,8 @@ for (im = 0; im < im_list.length; im++) {
 	outname_base = File.getNameWithoutExtension(im_name);
 
 	// read how many parts image needs to be opened in based on chunkSizeLimit
-	printDateTime("processing file "+im+" of "+im_list.length+": " + impath);
+	print_statement = "processing file "+im+" of "+im_list.length+": " + impath;
+	printDateTime(print_statement);
 	chunksArray = fileChunks(impath); // returns: newArray(nImageParts,sizeT,chunkSize);
 	nImageParts = chunksArray[0];
 	sizeT		= chunksArray[1];
@@ -261,7 +262,7 @@ saveAs("Text", outdir + "Log_"+datetime+".txt");
 selectWindow("Results");
 run("Close");
 File.delete(outdir + "Log_InProgress.txt");
-print("run finished");
+print("\\Update:run finished");
 
 ////////////////////////////////////// FUNCTIONS //////////////////////////////////////
 ////////////////////////////////////// FUNCTIONS //////////////////////////////////////
