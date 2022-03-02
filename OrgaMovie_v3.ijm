@@ -78,7 +78,7 @@ for (im = 0; im < im_list.length; im++) {
 	outname_base = File.getNameWithoutExtension(im_name);
 
 	// read how many parts image needs to be opened in based on chunkSizeLimit
-	printDateTime("processing file "+im+" of "+im_list.length+": " + path);
+	printDateTime("processing file "+im+" of "+im_list.length+": " + impath);
 	chunksArray = fileChunks(impath); // returns: newArray(nImageParts,sizeT,chunkSize);
 	nImageParts = chunksArray[0];
 	sizeT		= chunksArray[1];
@@ -920,14 +920,14 @@ function fetchSettings(){
 			Dialog.addNumber("Duration "+x, List.get(Dx), 0, colw, "hours");
 			Dialog.setInsets(15, 0, 3);
 		}
-			Dialog.addCheckbox("Indicate time switch in movie?", List.get("show_switch") );
+			//Dialog.addCheckbox("Indicate time switch in movie?", List.get("show_switch") );	// not used
 	
 		Dialog.show();
 		for (x = 0; x < nEpochs; x++) {
 			List.set("Epoch"+x+"_Tstep", Dialog.getNumber());
 			List.set("Epoch"+x+"_Duration", Dialog.getNumber());
 		}
-		List.set("show_switch",	Dialog.getCheckbox());
+		//List.set("show_switch",	Dialog.getCheckbox());
 	}
 	else {
 		List.set("Epoch0_Tstep",List.get("T_step"));
@@ -970,5 +970,5 @@ function default_settings(){
 	// dynamic time settings
 	List.set("Epoch0_Duration",18*20+1);	//first 18 hours
 	List.set("Epoch1_Tstep",10);
-	List.set("show_switch",0);
+	//List.set("show_switch",0);
 }
