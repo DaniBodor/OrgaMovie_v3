@@ -87,4 +87,8 @@ Your settings will always be at the top of your experiment log, so you can alway
 - Load defaults: If checked, the default settings (as in image above) are reloaded. After hitting OK, the dialog window will re-appear and you can still make changes.
     - Note that this will override the 'save settings' from above.
 
-
+### Epoch Settings
+- Time intervals X: set the interval (in minutes) between consecutive frames for epoch X.
+- Duration X: set the duration (in number of frames) of this epoch.
+    - Take care to check exact number of frames used by the microscope as opposed to just calculating the number of frames based on the interval. For example, 18 hours at 3 minute intervals could either mean 360 frames (18 hours * 20 frames/hour) or 361 frames.
+    - You can set 0 if it is the last epoch of the series and it will use this interval until the end of the movie. (If the duration for any epoch is set to 0, other epochs down the list are ignored). 
