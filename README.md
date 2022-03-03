@@ -20,7 +20,6 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 5) Restart FiJi and it will show up in your Image>Hyperstacks menu (or whatever other location you chose)  
     <img align="middle" src="https://user-images.githubusercontent.com/14219087/153886279-068b4ebf-1fbd-413e-bb91-364a03c67622.png" width=40%>
 
-[//]: # (https://user-images.githubusercontent.com/14219087/153043552-0d984d64-351b-4f12-bb03-4bdc5b87dfa5.png = prewvious version of image)
 
 ### External content required before you can run the macro
 There is a bit of external content required for this macro which may or may not be present on your installation of FiJi. After installing any of these, you need to restart FiJi for it to actually work.  
@@ -53,13 +52,18 @@ You can check which (if any) of these are already installed by hitting Ctrl+l or
 
 ## OrgaMovie Settings
 Your settings will always be at the top of your experiment log, so you can always find back which settings you used in any run.
-<img align="right" src="https://user-images.githubusercontent.com/14219087/153618487-913027b4-38fa-413d-99bb-2c2fbfe7adbd.png" width=25%>
+<img align="right" src="https://user-images.githubusercontent.com/14219087/156580343-04110f84-6cb7-4531-bd97-96def8eee660.png" width=25%>
+
+
 
 ### Input/output settings
 - Input filetype: write the extension of the filetype you want to use (so that all files in the input folder with a different extension are ignored).
 - Input channel: set the channel to use in terms of channel order (so N<sup>th</sup> channel).
     - Can be ignored if single-channel (i.e. single-color) data is used.
 - Time interval: set the interval (in minutes) between consecutive frames. This is used in the time-stamp of the movie.
+- Time-lapse epochs: in case you have used different time intervals throughout the time lapse, you can set the number of epochs (sequence with a certain time interval) here.
+    - Example: you imaged overnight every 3 min intervals, then for 24h at 10 min intervals, then the last hour at 3 min intervald again. The number of epochs is *3*.
+    - If epochs is set larger than 1, then another dialog will show after this one to set the details.
 - Z-step: set the axial step size (in microns). This is used for the color-bar legend.
 - Output format: Choose whether output videos should be in between _\*.avi_ or _\*.tif_ or both.
     - TIFs are easier to use for downstream analysis in ImageJ but require significantly more diskspace than AVIs (~25-50x larger files).
@@ -82,4 +86,5 @@ Your settings will always be at the top of your experiment log, so you can alway
     - Remember that your previous settings will be stored in the log from that run so that you don't loose them.
 - Load defaults: If checked, the default settings (as in image above) are reloaded. After hitting OK, the dialog window will re-appear and you can still make changes.
     - Note that this will override the 'save settings' from above.
+
 
