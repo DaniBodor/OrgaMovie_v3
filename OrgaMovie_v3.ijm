@@ -918,7 +918,7 @@ function fetchSettings(){
 			if (List.get(Dx) == "") List.set(Dx,0);
 
 			Dialog.addNumber("Time interval "+x, List.get(Tx), 0, colw, "min");
-			Dialog.addNumber("Duration "+x, List.get(Dx), 0, colw, "hours");
+			Dialog.addNumber("Duration "+x, List.get(Dx), 0, colw, "frames");
 			Dialog.setInsets(15, 0, 3);
 		}
 			//Dialog.addCheckbox("Indicate time switch in movie?", List.get("show_switch") );	// not used
