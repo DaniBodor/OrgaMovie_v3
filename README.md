@@ -41,7 +41,6 @@ You can check which (if any) of these are already installed by hitting Ctrl+l or
 1) Put all the raw data you want to process into your input folder (images can be any size and any format that FiJi can handle).
 2) Start Fiji and make sure you have no unsaved stuff open, as all images/results/ROIs/Logs/etc will be closed or overwritten without saving.
 3) Select _OrgaMovie_v3_ from wherever you installed it (or [create a shortcut](https://imagej.net/learn/keyboard-shortcuts) for it).
-    - Occasionally when starting the macro it will crash immediately and Fiji will show an _Exception_ window. Just start the macro again and it should run fine the second time (I've never had the problem pop up twice in a row). I haven't been able to find the source of this error or figure out when and why it happens.
 4) Choose your settings ([see below for explanation](https://github.com/DaniBodor/OrgaMovie_v3/edit/main/README.md#orgamovie-settings)), hit _OK_.
     - If you have the macro recorder open, an error message might pop up at this point. You can safely ignore this error and the macro will run just fine, or you can close the recorder to avoid the error appearing.
 5) Choose your input folder, hit _Select_.
