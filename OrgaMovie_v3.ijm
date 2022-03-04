@@ -6,7 +6,6 @@ requireLUTs();	// checks if relevant LUTs are available
 closeWindows();
 fixTemporalColorCode();		// fixes a bug in the Temporal Color Code plugin (might be obsolete after FiJi update, but has no negative effect)
 
-
 //// SELECT SETTINGS
 //get settings from dialog
 output_options = newArray("avi & tif", "avi only", "tif only");
@@ -723,7 +722,7 @@ function closeWindows(){
 	run("Close All");
 	dumpMemory(3);
 	roiManager("reset");
-	Table.reset();
+	if(isOpen(Table.title))		Table.reset();
 }
 
 
