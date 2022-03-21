@@ -168,7 +168,7 @@ for (im = 0; im < im_list.length; im++) {
 	}
 
 	// open and crop COLOR projections
-	print("re-opening all color projections");
+	print("____ re-opening all color projections ____");
 	run("Image Sequence...", "select=["+outdir+"] type=RGB dir=["+outdir+"] filter="+tempname_col+" sort");
 	rename("PRJCOL");
 	rgb_concat = getTitle();
@@ -258,10 +258,14 @@ datetime = datetime.replace(":","");
 
 selectWindow("Log");
 saveAs("Text", outdir + "Log_"+datetime+".txt");
-selectWindow("Results");
-run("Close");
 File.delete(outdir + "Log_InProgress.txt");
 print("\\Update:run finished");
+
+if (isOpen("Results")){
+	selectWindow("Results");
+	run("Close");
+}
+
 
 ////////////////////////////////////// FUNCTIONS //////////////////////////////////////
 ////////////////////////////////////// FUNCTIONS //////////////////////////////////////
