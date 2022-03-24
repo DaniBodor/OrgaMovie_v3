@@ -913,8 +913,7 @@ function fetchSettings(){
 							"  You can set duration to 0 for the final epoch (all further epochs will be ignored).");
 
 		// add a step size and duration setting for each epoch
-		for (x = 0; x < nEpochs;) {
-			x++;
+		for (x = 0; x < nEpochs; x++) {
 			Tx = "Epoch"+x+"_Tstep";
 			Dx = "Epoch"+x+"_Duration";
 			
@@ -928,16 +927,15 @@ function fetchSettings(){
 			//Dialog.addCheckbox("Indicate time switch in movie?", List.get("show_switch") );	// not used
 	
 		Dialog.show();
-		for (x = 0; x < nEpochs;) {
-			x++;
+		for (x = 0; x < nEpochs; x++) {
 			List.set("Epoch"+x+"_Tstep", Dialog.getNumber());
 			List.set("Epoch"+x+"_Duration", Dialog.getNumber());
 		}
 		//List.set("show_switch",	Dialog.getCheckbox());
 	}
 	else {
-		List.set("Epoch1_Tstep",List.get("T_step"));
-		List.set("Epoch1_Duration",0);
+		List.set("Epoch0_Tstep",List.get("T_step"));
+		List.set("Epoch0_Duration",0);
 	}
 
 	
@@ -974,7 +972,7 @@ function default_settings(){
 	List.set("intermed_times", 0);
 	List.set("run_in_bg", false);
 	// dynamic time settings
-	List.set("Epoch1_Duration",18*20+1);	//first 18 hours
-	List.set("Epoch2_Tstep",10);
+	List.set("Epoch0_Duration",18*20+1);	//first 18 hours
+	List.set("Epoch1_Tstep",10);
 	//List.set("show_switch",0);
 }
