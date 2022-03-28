@@ -77,7 +77,7 @@ for (im = 0; im < im_list.length; im++) {
 	outname_base = File.getNameWithoutExtension(im_name);
 
 	// read how many parts image needs to be opened in based on chunkSizeLimit
-	print_statement = "processing file "+im+" of "+im_list.length+": " + impath;
+	print_statement = "processing file "+im+1+" of "+im_list.length+": " + impath;
 	printDateTime(print_statement);
 	chunksArray = fileChunks(impath); // returns: newArray(nImageParts,sizeT,chunkSize);
 	nImageParts = chunksArray[0];
@@ -233,7 +233,7 @@ for (im = 0; im < im_list.length; im++) {
 	}
 
 	// final print & logsave
-	printDateTime("finished processing "+im+" of "+im_list.length+": " + im_name);
+	printDateTime("finished processing "+im+1+" of "+im_list.length+": " + im_name);
 	time = round((getTime() - start)/1000);
 	timeformat = d2s(floor(time/60),0) + ":" + IJ.pad(time%60,2);
 	
