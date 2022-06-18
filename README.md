@@ -2,7 +2,7 @@
 
 # OrgaMovie
 
-This Fiji/ImageJ macro takes any number 4D (xyzt) _\*.nd2_ image files of organoids and creates color-coded (for depth) time-lapse movies (see example below).  
+This Fiji/ImageJ macro takes any number 4D (xyzt) image files and creates color-coded (for depth) time-lapse movies (see example below). It works on any filetypes that can be opened by your ImageJ installation. It is designed with microscopy movies of organoid nuclei in mind (hence the name), but can be used to depth code other 4D images.  
 
 https://user-images.githubusercontent.com/14219087/153618145-6f403f22-9c2a-4beb-8de5-55ab82c4a644.mp4
 
@@ -11,18 +11,17 @@ This macro is based on another [macro](https://github.com/DaniBodor/OrgaMovie) p
 
 
 ## How to install OrgaMovie
-1) [Download](https://github.com/DaniBodor/OrgaMovie_v3/archive/refs/heads/main.zip) this repository by clicking on the link or on the green 'Code' button above and 'Download ZIP' (or use git pull).
-2) Extract your zip file
-3) Start FIJI and go to _Plugins>Install..._  
+1) [Download](https://github.com/DaniBodor/OrgaMovie_v3/archive/refs/heads/main.zip) this repository by clicking on the link or on the green 'Code' button above and 'Download ZIP' and extract the zip file (or use git pull).
+2) Start Fiji and go to _Plugins>Install..._  
     <img src="https://user-images.githubusercontent.com/14219087/153043733-e1f90753-01e7-4e4d-b06d-753f97aff7df.png" width=40%>
 
-4) Select OrgaMovie_v3.ijm from the location you downloaded and unzipped to and save it into you _.../fiji.app/plugins/Scripts/Image/Hyperstacks/_ folder (or some other location you prefer)  
-5) Restart Fiji and it will show up in your Image>Hyperstacks menu (or whatever other location you chose)  
+3) Select OrgaMovie_v3.ijm from the location you downloaded and unzipped to and save it into you _.../fiji.app/plugins/Scripts/Image/Hyperstacks/_ folder (or some other location you prefer)  
+4) Restart Fiji and it will show up in your Image>Hyperstacks menu (or whatever other location you chose)  
     <img align="middle" src="https://user-images.githubusercontent.com/14219087/153886279-068b4ebf-1fbd-413e-bb91-364a03c67622.png" width=40%>
 
 
-### External content required before you can run the macro
-There is a bit of external content required for this macro which may or may not be present on your installation of Fiji. After installing any of these, you need to restart Fiji for it to actually work.  
+### External content required before you can run OrgaMovie
+There is a bit of external content required which may or may not be present on your installation of Fiji. After installing any of these, you need to restart Fiji for it to actually work.  
 <img align="right" src=https://user-images.githubusercontent.com/14219087/153417850-0e500496-99b5-48d1-b6ee-7d646df1e794.png width=45%>
 
 You can check which (if any) of these are already installed by hitting Ctrl+l or just l (= lowercase L) in Fiji to open the focus search bar and start typing the plugin/extension name. If it's installed, it will be listed in the Commands list on the left. 
@@ -39,7 +38,7 @@ Remember that you will need to restart Fiji after installing any of these for it
 
 
 
-## Running the macro
+## Running OrgaMovie
 1) Put all the raw data you want to process into your input folder (images can be any size and any format that Fiji can handle).
 2) Start Fiji and make sure you have no unsaved stuff open, as all images/results/ROIs/Logs/etc will be closed or overwritten without saving.
 3) Select _OrgaMovie_v3_ from wherever you installed it (or [create a shortcut](https://imagej.net/learn/keyboard-shortcuts) for it).
