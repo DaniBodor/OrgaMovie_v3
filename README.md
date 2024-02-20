@@ -63,7 +63,7 @@ Your settings are recorded at the beginning of each experiment log, so you can a
     - Can be ignored if single-channel (i.e. single-color) data is used.
 - Time interval: set the interval (in minutes) between consecutive frames. This is used for the time-stamp of the movie.
 - Time-lapse epochs: in case you have used different time intervals throughout the time lapse, you can set the number of epochs (sequence with a certain time interval) here.
-    - Example: you imaged overnight every 3 min intervals, then for 24h at 10 min intervals, then the last hour at 3 min intervald again. The number of epochs in this case is **3**.
+    - Example: you imaged overnight every 3 min intervals, then for 24h at 10 min intervals, then the last hour at 3 min intervals again. The number of epochs in this case is **3**.
     - If epochs is set larger than 1, then another dialog will show after this one to set the details.
 - Z-step: set the axial step size (in microns). This is used for the color-bar legend.
 - Output format: choose whether output videos should be in between _\*.avi_ or _\*.tif_ or both.
